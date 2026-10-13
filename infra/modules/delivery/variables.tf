@@ -7,6 +7,17 @@ variable "github_owner" {
 variable "github_repository" {
   type = string
 }
+variable "github_oidc_subject_prefix" {
+  description = "Verified repository subject prefix, with immutable IDs when GitHub supplies them."
+  type        = string
+  validation {
+    condition = (
+      can(regex("^repo:[A-Za-z0-9-]+(@[0-9]+)?/[A-Za-z0-9_.-]+(@[0-9]+)?$", var.github_oidc_subject_prefix)) &&
+      replace(var.github_oidc_subject_prefix, "/@[0-9]+/", "") == "repo:${var.github_owner}/${var.github_repository}"
+    )
+    error_message = "Use the exact configured owner/repository prefix, optionally with numeric immutable IDs; wildcards and suffixes are forbidden."
+  }
+}
 variable "cluster_name" {
   type = string
 }

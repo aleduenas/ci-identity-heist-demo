@@ -58,3 +58,6 @@ output "audit_bucket_name" {
 output "cloudtrail_arn" {
   value = module.audit.trail_arn
 }
+output "github_oidc_subject" {
+  value = module.delivery.github_oidc_subject
+}

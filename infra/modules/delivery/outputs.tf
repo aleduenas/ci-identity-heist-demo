@@ -7,3 +7,6 @@ output "build_role_arn" {
 output "deploy_role_arn" {
   value = aws_iam_role.deploy.arn
 }
+output "github_oidc_subject" {
+  value = local.subject
+}

@@ -16,8 +16,23 @@ jobs:
   checks:
     uses: ./.github/workflows/checks.yml
 
-  publish:
+  verify-identity:
     needs: checks
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Verify immutable OIDC subject without contacting AWS
+        run: python3 scripts/checks/oidc_claims.py
+
+  publish:
+    needs: [checks, verify-identity]
     if: >-
       github.ref == 'refs/heads/main' &&
       vars.AWS_REGION != '' && vars.AWS_BUILD_ROLE_ARN != '' &&

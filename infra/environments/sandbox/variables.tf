@@ -56,3 +56,9 @@ variable "addon_versions" {
   type    = map(string)
   default = {}
 }
+
+variable "github_oidc_subject_prefix" {
+  description = "Verified GitHub immutable subject prefix for this repository. Reverify after rename/transfer."
+  type        = string
+  default     = "repo:aleduenas@54992507/mybank-eks-sandbox@1416500552"
+}

@@ -13,6 +13,7 @@ module "delivery" {
   name                              = var.name
   github_owner                      = "aleduenas"
   github_repository                 = "mybank-eks-sandbox"
+  github_oidc_subject_prefix        = var.github_oidc_subject_prefix
   cluster_name                      = module.eks.cluster_name
   cluster_arn                       = module.eks.cluster_arn
   existing_github_oidc_provider_arn = var.existing_github_oidc_provider_arn
