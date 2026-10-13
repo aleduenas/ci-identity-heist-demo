@@ -19,7 +19,7 @@ def main():
     values = dict(line.split("=", 1) for line in result.stdout.splitlines() if "=" in line)
     token = values.get("password")
     if result.returncode or not token:
-        raise SystemExit("No noninteractive GitHub credential is available. Connect GitHub or authenticate gh.")
+        raise SystemExit("No GitHub credential is available. Connect GitHub or authenticate gh.")
 
     def request(path, body=None):
         req = urllib.request.Request(
@@ -50,7 +50,8 @@ def main():
             raise SystemExit("Repository exists but is public; stopping without publishing files.")
         print("Verified private repository:", repo["html_url"])
     except urllib.error.HTTPError as error:
-        raise SystemExit(f"GitHub API request failed (HTTP {error.code}); no credential was printed.") from None
+        message = f"GitHub API request failed (HTTP {error.code}); no credential was printed."
+        raise SystemExit(message) from None
 
 
 if __name__ == "__main__":

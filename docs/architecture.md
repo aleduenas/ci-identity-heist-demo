@@ -37,7 +37,7 @@ One isolated VPC spans two availability zones. Private subnets host a small mana
 
 EKS uses API access entries, explicitly assigned bootstrap administrators, and custom namespace RBAC for deployment and engineering. Managed add-ons include VPC CNI, kube-proxy, CoreDNS and the EKS Pod Identity agent. Workloads get their own IAM role through Pod Identity; node roles have no application-data privileges. ECR stores immutable image tags. DynamoDB uses on-demand capacity, encryption and point-in-time recovery. CloudTrail records management operations and data events on the lab's tables; EKS control-plane audit logging is enabled.
 
-Infrastructure modules separate networking, EKS, data, audit, identity, and delivery IAM. The composition root only connects modules and exports operator-facing outputs. A bootstrap root prepares an encrypted, versioned S3 Terraform-state bucket with state locking. Kubernetes is installed in a separate phase after AWS provisioning, avoiding provider dependencies on a cluster that does not exist yet.
+Infrastructure modules separate networking, EKS, data, audit, identity, delivery IAM and an optional private operations host. The composition root only connects modules and exports operator-facing outputs. A bootstrap root prepares an encrypted, versioned S3 Terraform-state bucket with state locking. Kubernetes is installed in a separate phase after AWS provisioning, avoiding provider dependencies on a cluster that does not exist yet.
 
 ## Application and data contract
 
@@ -65,7 +65,7 @@ The local HTTP Keycloak development service is an intentional lab simplification
 
 Pull requests run application checks, Terraform formatting/validation and Kubernetes manifest checks. Trusted pushes to `main` test and build an image tagged with the commit SHA, assume a build role through GitHub OIDC, and push to ECR. A separate deploy job uses a pre-provisioned trusted runner with VPC access, assumes its own OIDC role, updates only the application Deployment image, and waits for rollout. Untrusted pull requests never run on the private runner. The workflow runs on each merge and supports manual dispatch.
 
-A self-hosted runner is an operator prerequisite, not an implicitly internet-reachable machine or a Terraform resource containing a GitHub registration token. The first release requires an admin to apply namespace, service account, RBAC, service, policies and Deployment. Subsequent delivery updates the image. No AWS access keys are stored in GitHub. OIDC trusts are bound to this repository and `main`; repository and workflow write access are part of the trusted release boundary.
+A private EC2 operations host with SSM access provides the runner machine and an operator tunnel to EKS. GitHub runner registration is an operator step; Terraform contains no registration token. The host role has only SSM permissions. The first release requires an admin to apply namespace, service account, RBAC, service, policies and Deployment. Subsequent delivery updates the image. No AWS access keys are stored in GitHub. OIDC trusts are bound to this repository and `main`; repository and workflow write access are part of the trusted release boundary.
 
 ## Operational phases and acceptance
 
@@ -95,6 +95,6 @@ Acceptance requires documented provisioning, identity setup, daily delivery, tra
 
 - [EKS access entries](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
 - [IAM SAML provider setup](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_saml.html)
-- [GitHub OIDC for AWS](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-your-deployments/oidc-in-aws)
+- [GitHub OIDC for AWS](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws)
 - [Keycloak container realm import](https://www.keycloak.org/server/containers)
 - [EKS Kubernetes lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)

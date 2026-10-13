@@ -1,0 +1,13 @@
+.git
+.github
+.venv
+.tools
+.cache
+__pycache__
+*.egg-info
+.env
+identity/generated
+infra
+deploy
+docs
+tests

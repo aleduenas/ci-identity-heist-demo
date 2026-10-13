@@ -1,0 +1,5 @@
+# Delivery IAM module
+
+An immutable-tag ECR repository and two GitHub OIDC roles bind exactly the configured private repository's `main` branch and STS audience. Build pushes only this repository's images; ECR authorization tokens require resource `*`. Deploy only describes this EKS cluster and authenticates as `mybank:deployers`, whose Kubernetes Role permits the app rollout. Neither role is an AWS administrator. Branch/workflow/repository writers can assume both roles through trusted main workflows and must be treated as trusted releasers.
+
+An account can have only one GitHub issuer provider. Set `existing_github_oidc_provider_arn` to reuse one; otherwise this module creates it. AWS validates GitHub through its trusted CA list, so no obsolete hard-coded thumbprint is embedded. The module does not create/register a runner or store its registration token. ECR cleanup preserves tagged releases; delete images deliberately before destroying a nonempty repository.

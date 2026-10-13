@@ -3,9 +3,11 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
+*.egg-info/
 .terraform/
 *.tfstate*
 *.tfplan
+infra/**/backend.hcl
 *.tfvars
 !*.tfvars.example
 .env
@@ -13,4 +15,5 @@ __pycache__/
 identity/generated/
 .tools/
 .cache/
+.uv-cache/
 dist/

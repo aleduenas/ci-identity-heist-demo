@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mybank-eks-sandbox"
+version = "0.1.0"
+description = "Synthetic transactional API for the Mybank EKS sandbox"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi==0.135.4",
+  "starlette==1.7.0",
+  "pydantic==2.12.3",
+  "uvicorn==0.41.0",
+  "boto3==1.42.21",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.4.2", "moto[dynamodb]==5.1.15", "httpx==0.28.1", "ruff==0.14.2",
+  "PyYAML==6.0.3",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*", "identity*"]
+
+[tool.setuptools.package-data]
+identity = ["keycloak/realm.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
