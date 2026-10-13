@@ -34,10 +34,17 @@ Updated: 2026-10-13.
 - Docker build/runtime: Python 3.12 Linux CPU image runs as nonroot with read-only API filesystem; localhost probes healthy.
 - DynamoDB Local 3.1.0 API smoke: readiness, authentication, atomic balance updates, matching retry, conflicting retry and overdraft rollback passed.
 - Keycloak 26.6.4 local smoke: both employee profiles emitted separate role claims, AWS audience and signed assertions. Public metadata export succeeded. Assertions were not submitted to AWS.
-- [GitHub hosted CI](https://github.com/aleduenas/mybank-eks-sandbox/actions/runs/38352721327): application tests/container smoke, Terraform and Kubernetes checks all passed on implementation commit `0c2e67f`. AWS publish/deploy skipped as intended while repository variables are unset. Final OIDC compatibility follow-up is being verified separately.
+- [Final GitHub hosted CI](https://github.com/aleduenas/mybank-eks-sandbox/actions/runs/38353103026): application tests/container smoke, Terraform, Kubernetes and live GitHub OIDC claim-format checks all passed on code commit `05d8535`. AWS publish/deploy skipped as intended while repository variables are unset. Earlier implementation CI also passed. The final documentation-only handoff commit skips redundant CI.
 - GitHub API verified repository remains private and uses immutable OIDC subjects; AWS trust updated to the exact owner/repository IDs, with a hosted nonsecret claim-format check.
 
 No AWS plan/apply, STS federation, live IAM/CNI enforcement, CloudTrail delivery or EKS rollout has been performed. Local signatures were checked for presence, not independently verified cryptographically. Temporary test containers and generated identity artifacts are removed after verification.
+
+## Repository layout verification
+
+- Private visibility and immutable OIDC settings were verified through GitHub's repository API.
+- All application, identity, script, test and Terraform code files are 116 lines or fewer. Transfer invariants and recovery tests are separate modules.
+- Local documentation links resolve; Git attributes preserve Linux line endings, including EC2 user-data shell scripts.
+- Working tree is committed and pushed; ignored operator/generated secrets and test volumes are excluded.
 
 ## Continuation checklist
 
