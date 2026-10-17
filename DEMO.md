@@ -32,7 +32,7 @@ All commands run from the repository root in PowerShell, using the prepared virt
 
 A browser opens; approve the sign-in as **`demo-admin`**. The CLI then uses temporary credentials, with no access keys anywhere. Re-run this command whenever a later command reports expired credentials.
 
-## Stand it up (about 30–40 minutes, unattended)
+## Stand it up (about 20–25 minutes, unattended)
 
 ```powershell
 .venv/Scripts/python.exe -m scripts.demo.up
