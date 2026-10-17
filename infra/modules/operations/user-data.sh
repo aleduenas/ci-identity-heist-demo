@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-dnf install -y docker git python3 unzip jq libicu tar awscli-2
+# libicu, krb5-libs, openssl-libs, zlib and libstdc++ are the runner's .NET dependencies;
+# GitHub's installdependencies.sh does not recognise Amazon Linux 2023.
+dnf install -y docker git python3 unzip jq tar awscli-2 libicu krb5-libs openssl-libs zlib libstdc++
 systemctl enable --now docker
 systemctl enable --now amazon-ssm-agent
 
@@ -18,7 +20,6 @@ mkdir -p /opt/actions-runner
 curl -fsSLo /tmp/runner.tar.gz "https://github.com/actions/runner/releases/download/v$RUNNER_VERSION/actions-runner-linux-x64-$RUNNER_VERSION.tar.gz"
 echo "$RUNNER_SHA256  /tmp/runner.tar.gz" | sha256sum -c -
 tar -xzf /tmp/runner.tar.gz -C /opt/actions-runner
-/opt/actions-runner/bin/installdependencies.sh
 chown -R runner:runner /opt/actions-runner
 touch /opt/actions-runner/.mybank-ready
 # Registration happens later through scripts/demo; no tokens or credentials live here.

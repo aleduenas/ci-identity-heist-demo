@@ -44,6 +44,10 @@ def wait_host_ready(instance: str, timeout: int = 900):
             if status == "Success":
                 ok(f"operations host {instance} online with runner tooling installed")
                 return
+            failed, _ = _shell(instance, ["cloud-init status | grep -q error"], 60)
+            if failed == "Success":
+                raise SystemExit("Host user-data failed; inspect /var/log/cloud-init-output.log "
+                                 "over SSM (aws ssm start-session --target " + instance + ")")
         time.sleep(15)
     raise SystemExit("Operations host never became ready (check cloud-init on the instance)")
 
