@@ -10,7 +10,7 @@ import boto3
 from botocore import UNSIGNED
 from botocore.config import Config
 
-MARKER = "original-harmless-probe"
+MARKER = "a2-simulated-stolen-agent-change"
 
 
 def main():
