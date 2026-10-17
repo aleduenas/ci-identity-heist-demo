@@ -21,7 +21,9 @@ def main():
     step(f"Prevention {args.mode}: exercise role trusts PR jobs = {allow_pr}")
     plan = str(CACHE / "prevent.tfplan")
     terraform("plan", "-input=false", "-no-color", *tf_vars(repo), f"-out={plan}", capture=True)
-    terraform("apply", "-input=false", plan)
+    result = terraform("apply", "-input=false", "-no-color", plan, capture=True)
+    print("    " + next((line for line in result.splitlines() if line.startswith("Apply complete")),
+                         "applied"), flush=True)
     patterns = save_outputs()["d2_subject_patterns"]
     for pattern in patterns:
         print(f"    trusts {pattern.split(':', 2)[2]}")
