@@ -1,32 +1,25 @@
 # Local AWS operator session
 
-The AWS CLI is installed in the ignored `.tools/aws-cli/portable` directory from
-the official Amazon-signed Windows installer. No long-lived access key is used.
+The AWS CLI and Session Manager plugin live in the ignored `.tools/` directory, extracted from the official signed installers. No long-lived access key is used: the CLI signs in with your console IAM user's temporary session.
 
-In PowerShell, from the repository root:
+Sign in once per session (a browser approval):
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-. ./scripts/aws/session.ps1
-aws login --profile codex-builder-login --remote --region us-east-1
-aws sts get-caller-identity
+.venv/Scripts/python.exe -m scripts.demo.login
 ```
 
-The execution-policy setting applies only to that terminal process. Alternatively,
-use the Python wrapper without changing any PowerShell execution policy:
+That writes two ignored profiles to `.cache/aws/config`: `demo-admin-login` (the console login session) and `demo-admin` (exports those temporary credentials to boto3 and Terraform). Run any command with them through the wrapper:
 
 ```powershell
 .venv/Scripts/python.exe -m scripts.aws.run aws sts get-caller-identity
 ```
 
-The verified Session Manager plugin is also available through this environment
-for private EKS access via the operations host.
+Or dot-source the session into an interactive PowerShell:
 
-The login profile uses temporary browser-authorized credentials. The
-`codex-builder` profile exposes those credentials through AWS CLI's process
-provider for SDKs and Terraform. Local configuration and refresh credentials
-remain under ignored `.cache/aws/`; do not commit or print their contents.
-Login may need to be repeated when its session expires.
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+. ./scripts/aws/session.ps1
+aws sts get-caller-identity
+```
 
-Check the caller account and identity before provisioning. Budget/expiry
-protection must be deployed and verified before the chargeable D2 lab.
+The operator defaults to IAM user `demo-admin` in `us-east-1`; set `MYBANK_AWS_USER` to use another IAM user. Local configuration and refresh credentials stay under ignored `.cache/aws/`; never commit or print their contents.
