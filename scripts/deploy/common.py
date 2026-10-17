@@ -1,5 +1,8 @@
 """Shared operator configuration and isolated kubeconfig handling."""
 
+# The private release runner uses Amazon Linux 2023's system Python 3.9.
+from __future__ import annotations
+
 import json
 import os
 import re
