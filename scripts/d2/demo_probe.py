@@ -18,7 +18,7 @@ from botocore import UNSIGNED
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-MARKER = "original-harmless-probe"
+MARKER = "stolen-agent-change-201345"
 
 
 def web_identity_token() -> str:
