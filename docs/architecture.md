@@ -4,7 +4,7 @@ Status: implementation contract, 2026-10-13. Repository: `aleduenas/mybank-eks-s
 
 ## Purpose and boundary
 
-Build a small, production-shaped AWS environment for authorized security exercises. Mybank is a fictional bank; all customer identities, accounts, and transfers are synthetic. This repository creates the environment and its normal operational workflows. Region defaults to `ca-central-1`. Infrastructure is prepared as code; AWS apply is an explicit operator action.
+Build a small, production-shaped AWS environment for authorized security exercises. Mybank is a fictional bank; all customer identities, accounts, and transfers are synthetic. This repository creates the environment and its normal operational workflows. Region defaults to `us-east-1`. Infrastructure is prepared as code; AWS apply is an explicit operator action.
 
 ## System layout
 

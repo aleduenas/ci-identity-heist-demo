@@ -1,7 +1,7 @@
 resource "aws_ecr_repository" "app" {
   name                 = "${var.name}/api"
   image_tag_mutability = "IMMUTABLE"
-  force_delete         = false
+  force_delete         = var.lab_teardown_force
   encryption_configuration {
     encryption_type = "AES256"
   }

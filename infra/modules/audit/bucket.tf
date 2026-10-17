@@ -7,7 +7,7 @@ locals {
 
 resource "aws_s3_bucket" "audit" {
   bucket        = "${var.name}-audit-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
-  force_destroy = false
+  force_destroy = var.lab_teardown_force
 }
 
 resource "aws_s3_bucket_versioning" "audit" {

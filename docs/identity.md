@@ -41,7 +41,7 @@ aws sts get-caller-identity
 
 In PowerShell, set `$env:AWS_SHARED_CREDENTIALS_FILE = (Resolve-Path identity/generated/credentials).Path` and `$env:AWS_PROFILE = 'mybank-engineer'`. The exchange helper writes credentials without printing them. Assertions are subject to IAM expiry, signature, audience and role checks. Delete assertion files after exchange; profiles expire after one hour.
 
-From a machine with VPC access, use `aws eks update-kubeconfig --name <cluster-name> --region ca-central-1 --profile mybank-engineer`. Do not add `--role-arn` for the same role: that would request a second AssumeRole action rather than use the SAML session.
+From a machine with VPC access, use `aws eks update-kubeconfig --name <cluster-name> --region us-east-1 --profile mybank-engineer`. Do not add `--role-arn` for the same role: that would request a second AssumeRole action rather than use the SAML session.
 
 ## Verify the role boundary
 

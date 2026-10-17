@@ -19,6 +19,9 @@ output "private_subnet_ids" {
 output "operations_instance_id" {
   value = try(module.operations[0].instance_id, null)
 }
+output "runner_parameter_name" {
+  value = try(module.operations[0].runner_parameter_name, null)
+}
 output "customers_table_name" {
   value = module.data.table_names["customers"]
 }

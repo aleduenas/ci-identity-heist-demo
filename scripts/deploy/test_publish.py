@@ -12,7 +12,7 @@ class PublishTest(unittest.TestCase):
         digest = "sha256:" + "a" * 64
         with patch("publish_image.subprocess.run") as run:
             run.return_value = subprocess.CompletedProcess([], 0, digest, "")
-            repository = "123456789012.dkr.ecr.ca-central-1.amazonaws.com/mybank-api"
+            repository = "123456789012.dkr.ecr.us-east-1.amazonaws.com/mybank-api"
             self.assertEqual(publish(repository, "b" * 40), f"{repository}@{digest}")
             self.assertEqual(run.call_count, 1)
 

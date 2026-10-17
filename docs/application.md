@@ -20,7 +20,7 @@ This is a fictional bank API with two synthetic accounts, not a customer-facing 
 
 | Variable | Default / purpose |
 | --- | --- |
-| `AWS_REGION` | `ca-central-1` |
+| `AWS_REGION` | `us-east-1` |
 | `DYNAMODB_ENDPOINT_URL` | Unset for AWS; `http://dynamodb:8000` in Compose |
 | `CUSTOMERS_TABLE` | `mybank-customers` |
 | `ACCOUNTS_TABLE` | `mybank-accounts` |

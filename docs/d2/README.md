@@ -60,7 +60,7 @@ For example, the resulting PR subject would end in `:pull_request:event_name:pul
 
 **This is a repository-wide OIDC change.** An optional coordinated baseline migration is now implemented locally: `github_oidc_include_run_context=true` enables main-only custom trust, and repository variable `MYBANK_OIDC_RUN_CONTEXT=true` enables the matching release format check. Neither has been activated remotely. Coordinate Terraform trust, GitHub template and checker settings; record previous settings before changing them. Never broaden the baseline deployment role to PRs. Verify the emitted subject rather than relying on this example.
 
-Set `D2_DEMO_ROLE_ARN` as a GitHub repository variable, and retain the existing `AWS_REGION` variable or use the workflow's `ca-central-1` default. Initially leave the variable unset until the isolated role and test configuration are ready; the job then skips.
+Set `D2_DEMO_ROLE_ARN` as a GitHub repository variable, and retain the existing `AWS_REGION` variable or use the workflow's `us-east-1` default. Initially leave the variable unset until the isolated role and test configuration are ready; the job then skips.
 
 ## Independent live collection
 
@@ -70,12 +70,12 @@ Start the collector before the comparisons so its polling bounds availability me
 
 ```powershell
 $d2Start = (Get-Date).ToUniversalTime().AddMinutes(-2).ToString('o')
-python -m scripts.d2.collect --role-arn $env:D2_DEMO_ROLE_ARN --repository aleduenas/mybank-eks-sandbox --subject-prefix 'repo:aleduenas@54992507/mybank-eks-sandbox@1416500552' --region ca-central-1 --start $d2Start --follow-seconds 900 --poll-seconds 15 --output docs/d2/generated/live.json
+python -m scripts.d2.collect --role-arn $env:D2_DEMO_ROLE_ARN --repository aleduenas/mybank-eks-sandbox --subject-prefix 'repo:aleduenas@54992507/mybank-eks-sandbox@1416500552' --region us-east-1 --start $d2Start --follow-seconds 900 --poll-seconds 15 --output docs/d2/generated/live.json
 ```
 
 Here `D2_DEMO_ROLE_ARN` in the local process is the reviewed exercise output, not a secret. The collector uses the regional CloudTrail `LookupEvents` API, follows every returned page, queries only the relevant operation and time window, filters the exact role, and deduplicates event IDs during that invocation. Page requests are spaced to respect the service's two-request-per-second quota. Start a new output file for each independent observation session; restarting the collector resets its in-memory first-observed times.
 
-Use regional STS in `ca-central-1`, as the probe does, so collection queries the matching region. CloudTrail Event History can provide these management events without deploying a new trail. If a separate future implementation uses EventBridge, STS assumptions are read-only management events: a normal `ENABLED` rule is insufficient; it needs an active logging trail and `ENABLED_WITH_ALL_CLOUDTRAIL_MANAGEMENT_EVENTS`.
+Use regional STS in `us-east-1`, as the probe does, so collection queries the matching region. CloudTrail Event History can provide these management events without deploying a new trail. If a separate future implementation uses EventBridge, STS assumptions are read-only management events: a normal `ENABLED` rule is insufficient; it needs an active logging trail and `ENABLED_WITH_ALL_CLOUDTRAIL_MANAGEMENT_EVENTS`.
 
 Live CloudTrail records a **denied** request with null `requestParameters`/`responseElements`. The role is then read from `resources[]` (`AWS::IAM::Role`) and the rejected subject from `userIdentity.userName`, so denials are recorded as `assumption_denied` and linked to their run.
 

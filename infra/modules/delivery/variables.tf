@@ -34,3 +34,8 @@ variable "existing_github_oidc_provider_arn" {
   type        = string
   default     = null
 }
+variable "lab_teardown_force" {
+  description = "Lab only: let destroy remove retained logs/images. Keep false outside disposable labs."
+  type        = bool
+  default     = false
+}

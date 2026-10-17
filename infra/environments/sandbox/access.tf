@@ -11,8 +11,9 @@ module "identity" {
 module "delivery" {
   source                            = "../../modules/delivery"
   name                              = var.name
-  github_owner                      = "aleduenas"
-  github_repository                 = "mybank-eks-sandbox"
+  github_owner                      = var.github_owner
+  github_repository                 = var.github_repository
+  lab_teardown_force                = var.lab_teardown_force
   github_oidc_subject_prefix        = var.github_oidc_subject_prefix
   github_oidc_include_run_context   = var.github_oidc_include_run_context
   cluster_name                      = module.eks.cluster_name

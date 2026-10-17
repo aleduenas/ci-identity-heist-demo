@@ -8,7 +8,7 @@ In PowerShell, from the repository root:
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 . ./scripts/aws/session.ps1
-aws login --profile codex-builder-login --remote --region ca-central-1
+aws login --profile codex-builder-login --remote --region us-east-1
 aws sts get-caller-identity
 ```
 

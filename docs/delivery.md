@@ -71,7 +71,7 @@ The namespace enforces the Kubernetes restricted Pod Security profile. Pods run 
 Use the optional `operations_instance_id` private EC2 host prepared by Terraform, or a dedicated equivalent with VPC access. Its instance role allows SSM management only; it does not receive cluster-administrator or customer-data privileges. The deployment job receives short-lived credentials from GitHub OIDC. Register the runner manually with an ephemeral registration token obtained from this private repository's **Settings → Actions → Runners → New self-hosted runner** screen. Follow the generated, checksum-verified GitHub installation instructions inside an SSM session:
 
 ```bash
-aws ssm start-session --target OPERATIONS_INSTANCE_ID --region ca-central-1
+aws ssm start-session --target OPERATIONS_INSTANCE_ID --region us-east-1
 ```
 
 Create a dedicated unprivileged Linux user and runner directory. Configure the repository URL `https://github.com/aleduenas/mybank-eks-sandbox` with the custom label `mybank-sandbox` in addition to the default `self-hosted`, `linux`, and `x64` labels. Install AWS CLI v2 and kubectl 1.35 before starting it. Python 3 and Git are also required; the deployment script uses only Python's standard library. Run the runner as that user through the runner's documented service installer. AWS registration tokens and downloaded runner configuration stay on the host, outside this repository and Terraform state.

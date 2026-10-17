@@ -28,7 +28,7 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertEqual(deployment_role["rules"][0]["resourceNames"], ["mybank-api"])
 
     def test_tag_and_repository_must_be_immutable(self):
-        repository = "123456789012.dkr.ecr.ca-central-1.amazonaws.com/mybank-api"
+        repository = "123456789012.dkr.ecr.us-east-1.amazonaws.com/mybank-api"
         self.assertEqual(
             checked_image(repository + ":" + "a" * 40, repository), repository + ":" + "a" * 40
         )
@@ -39,10 +39,10 @@ class DeploymentContractTest(unittest.TestCase):
             checked_image(repository + ":" + "a" * 40, repository + "-other")
 
     def test_render_uses_real_output_names_and_preserves_security_context(self):
-        repository = "123456789012.dkr.ecr.ca-central-1.amazonaws.com/mybank-api"
+        repository = "123456789012.dkr.ecr.us-east-1.amazonaws.com/mybank-api"
         values = {
             "ecr_repository_url": repository,
-            "aws_region": "ca-central-1",
+            "aws_region": "us-east-1",
             "customers_table_name": "actual-customers",
             "accounts_table_name": "actual-accounts",
             "transfers_table_name": "actual-transfers",

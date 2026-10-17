@@ -11,6 +11,7 @@ module "eks" {
   vpc_cidr                  = module.network.vpc_cidr
   private_subnet_ids        = module.network.private_subnet_ids
   bootstrap_admin_role_arns = var.bootstrap_admin_role_arns
+  console_viewer_arns       = var.console_viewer_arns
   addon_versions            = var.addon_versions
   depends_on                = [module.network]
 }
@@ -25,6 +26,8 @@ module "audit" {
   name       = var.name
   aws_region = var.aws_region
   table_arns = module.data.table_arns
+
+  lab_teardown_force = var.lab_teardown_force
 }
 
 module "operations" {

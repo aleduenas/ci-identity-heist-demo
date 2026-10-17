@@ -19,7 +19,7 @@ export MYBANK_KUBE_TLS_SERVER_NAME=<hostname-printed-by-the-tunnel>
 
 PowerShell equivalents are `$env:MYBANK_KUBE_API_SERVER = 'https://127.0.0.1:8443'` and `$env:MYBANK_KUBE_TLS_SERVER_NAME = '<hostname>'`. The [bootstrap helper](delivery.md) uses these variables to configure its temporary kubeconfig, retaining the EKS CA and verifying the real EKS certificate name. It never uses `--insecure-skip-tls-verify`.
 
-For direct kubectl after bootstrap, create your normal kubeconfig using `aws eks update-kubeconfig --name <cluster> --region ca-central-1`. Obtain its cluster identifier with `kubectl config view -o json`, then run:
+For direct kubectl after bootstrap, create your normal kubeconfig using `aws eks update-kubeconfig --name <cluster> --region us-east-1`. Obtain its cluster identifier with `kubectl config view -o json`, then run:
 
 ```bash
 kubectl config set-cluster <cluster-identifier> \

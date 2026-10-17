@@ -51,12 +51,24 @@ def record(event: dict, arguments, github_token: str) -> dict:
             "result": decision, "alert": render(decision)}
 
 
+def announce(entry: dict):
+    """Human-readable line per decision; the full alert when one is raised."""
+    result = entry["result"]
+    context = f"{result.get('github_event') or '?'} run {result.get('run_id') or '?'}"
+    print(f"[{result.get('event_time_utc')}] {context} -> {result['decision']}", flush=True)
+    alert = entry.get("alert")
+    if alert:
+        print(f"    ALERT ({alert['severity']}): {alert['title']}", flush=True)
+        print(f"    {alert['what_happened']}", flush=True)
+        print(f"    where: {alert['where_to_look']}", flush=True)
+
+
 def arguments():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--role-arn", required=True)
     parser.add_argument("--repository", required=True)
     parser.add_argument("--subject-prefix", required=True)
-    parser.add_argument("--region", default="ca-central-1")
+    parser.add_argument("--region", default="us-east-1")
     parser.add_argument("--start", required=True, help="UTC ISO timestamp with timezone")
     parser.add_argument("--end", help="Fixed UTC ISO end; omitted means current poll time")
     parser.add_argument("--token-env", default="D2_GITHUB_TOKEN")
@@ -107,14 +119,14 @@ def main():
             if previous:
                 entry["first_observed_searchable_utc"] = previous["first_observed_searchable_utc"]
             records[event_id] = entry
+            if not previous or previous["result"]["decision"] != entry["result"]["decision"]:
+                announce(entry)
         document = {
             "mode": "live_cloudtrail_lookup_and_independent_github_api", "recorded_utc": utc_now(),
             "measurement_note": "Observed availability includes collector polling/setup delay.",
             "region": args.region, "records": list(records.values()),
         }
         args.output.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
-        decisions = [entry["result"]["decision"] for entry in records.values()]
-        print(json.dumps({"records": len(records), "decisions": decisions}), flush=True)
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             break

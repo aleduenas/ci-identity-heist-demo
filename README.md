@@ -53,7 +53,7 @@ The local database is in memory. Restarting it clears the fixtures; `docker comp
 
 ## Provision AWS and employee access
 
-Start with [the deployment sequence](docs/deployment.md). It links the individual state bootstrap, Terraform, private-access, Kubernetes, runner, SAML and seeding procedures. Region defaults to `ca-central-1`. Use a dedicated sandbox account, review the plan, and provision with an authenticated operator role.
+Start with [the deployment sequence](docs/deployment.md). It links the individual state bootstrap, Terraform, private-access, Kubernetes, runner, SAML and seeding procedures. Region defaults to `us-east-1`. Use a dedicated sandbox account, review the plan, and provision with an authenticated operator role.
 
 AWS resources have **not** been applied. The code incurs AWS charges when applied; the [cost and teardown guidance](docs/infrastructure.md) identifies persistent resources. GitHub release jobs remain disabled until repository variables and the runner are configured.
 

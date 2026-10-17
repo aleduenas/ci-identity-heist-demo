@@ -9,7 +9,7 @@ variable "aws_account_id" {
 
 variable "aws_region" {
   type    = string
-  default = "ca-central-1"
+  default = "us-east-1"
 }
 
 variable "name" {
@@ -34,6 +34,18 @@ variable "bootstrap_admin_role_arns" {
       for arn in var.bootstrap_admin_role_arns : can(regex("^arn:aws:iam::[0-9]{12}:role/.+$", arn))
     ])
     error_message = "Supply at least one existing IAM role ARN; assumed-role session ARNs are invalid."
+  }
+}
+
+variable "console_viewer_arns" {
+  description = "Human IAM users/roles given read-only EKS console visibility (no Secrets, no writes)."
+  type        = set(string)
+  default     = []
+  validation {
+    condition = alltrue([
+      for arn in var.console_viewer_arns : can(regex("^arn:aws:iam::[0-9]{12}:(user|role)/.+$", arn))
+    ])
+    error_message = "Use IAM user or role ARNs, never STS session ARNs or the root user."
   }
 }
 
@@ -64,6 +76,21 @@ variable "github_oidc_subject_prefix" {
 }
 variable "github_oidc_include_run_context" {
   description = "Match the coordinated custom GitHub subject containing signed event, run and attempt identifiers."
+  type        = bool
+  default     = false
+}
+variable "github_owner" {
+  description = "GitHub owner of the delivery repository; scripts/demo derives it from the git remote."
+  type        = string
+  default     = "aleduenas"
+}
+variable "github_repository" {
+  description = "GitHub repository name; its numeric IDs belong in github_oidc_subject_prefix."
+  type        = string
+  default     = "mybank-eks-sandbox"
+}
+variable "lab_teardown_force" {
+  description = "Lab only: let destroy remove retained logs/images. Keep false outside disposable labs."
   type        = bool
   default     = false
 }

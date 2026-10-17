@@ -17,6 +17,11 @@ variable "node_instance_type" {
 variable "bootstrap_admin_role_arns" {
   type = set(string)
 }
+variable "console_viewer_arns" {
+  description = "IAM users/roles given read-only cluster visibility (AmazonEKSViewPolicy)."
+  type        = set(string)
+  default     = []
+}
 variable "addon_versions" {
   description = "Optional exact versions after reviewing compatible AWS add-ons."
   type        = map(string)

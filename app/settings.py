@@ -9,7 +9,7 @@ from botocore.config import Config
 
 @dataclass(frozen=True)
 class Settings:
-    region: str = "ca-central-1"
+    region: str = "us-east-1"
     endpoint_url: str | None = None
     customers_table: str = "mybank-customers"
     accounts_table: str = "mybank-accounts"
@@ -19,7 +19,7 @@ class Settings:
     @classmethod
     def from_environment(cls) -> "Settings":
         return cls(
-            region=os.getenv("AWS_REGION", "ca-central-1"),
+            region=os.getenv("AWS_REGION", "us-east-1"),
             endpoint_url=os.getenv("DYNAMODB_ENDPOINT_URL") or None,
             customers_table=os.getenv("CUSTOMERS_TABLE", "mybank-customers"),
             accounts_table=os.getenv("ACCOUNTS_TABLE", "mybank-accounts"),

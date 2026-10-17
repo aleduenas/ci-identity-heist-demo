@@ -1,6 +1,6 @@
 # Sandbox composition root
 
-Seven focused modules connect the VPC, EKS, DynamoDB, audit trail, employee/workload identity, GitHub delivery, and optional SSM operations host. Defaults: ca-central-1, `mybank-sandbox`, EKS 1.35, two t3.medium nodes and one t3.small operations host. No public app/API endpoint exists.
+Seven focused modules connect the VPC, EKS, DynamoDB, audit trail, employee/workload identity, GitHub delivery, and optional SSM operations host. Defaults: us-east-1, `mybank-sandbox`, EKS 1.35, two t3.medium nodes and one t3.small operations host. No public app/API endpoint exists.
 
 Copy `backend.hcl.example` to ignored `backend.hcl`; copy `terraform.tfvars.example` to ignored `terraform.tfvars`. Replace account/bucket/admin role placeholders. Use IAM role ARNs, not temporary STS session ARNs. Initial federation remains disabled until live Keycloak metadata is exported. Keep the operations host or provide another VPC-connected operator/runner.
 

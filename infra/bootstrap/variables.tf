@@ -1,6 +1,6 @@
 variable "aws_region" {
   type    = string
-  default = "ca-central-1"
+  default = "us-east-1"
 }
 
 variable "aws_account_id" {
@@ -12,15 +12,15 @@ variable "aws_account_id" {
   }
 }
 
-variable "operator_principal_arn" {
-  description = "Explicit existing IAM user or role allowed to bootstrap private Kubernetes."
-  type        = string
-  default     = null
+variable "operator_principal_arns" {
+  description = "Explicit existing IAM users or roles allowed to bootstrap private Kubernetes."
+  type        = list(string)
+  default     = []
   validation {
-    condition = var.operator_principal_arn == null || can(regex(
-      "^arn:aws:iam::[0-9]{12}:(user|role)/.+$", var.operator_principal_arn
-    ))
-    error_message = "Use a real IAM user/role ARN, never an STS session ARN."
+    condition = alltrue([for arn in var.operator_principal_arns : can(regex(
+      "^arn:aws:iam::[0-9]{12}:(user|role)/.+$", arn
+    ))])
+    error_message = "Use real IAM user/role ARNs, never STS session ARNs."
   }
 }
 

@@ -11,7 +11,7 @@ def sample(event_name: str = "pull_request", run_id: int = 1001) -> tuple[dict, 
     aws = {
         "eventID": f"fixture-{event_name}-{run_id}", "eventTime": "2026-10-17T12:00:00Z",
         "eventSource": "sts.amazonaws.com", "eventName": "AssumeRoleWithWebIdentity",
-        "awsRegion": "ca-central-1", "recipientAccountId": "111122223333",
+        "awsRegion": "us-east-1", "recipientAccountId": "111122223333",
         "requestParameters": {"roleArn": ROLE, "roleSessionName": "release-looking-demo"},
         "responseElements": {
             "subjectFromWebIdentityToken": subject, "audience": "sts.amazonaws.com",

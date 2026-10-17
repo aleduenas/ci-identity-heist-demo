@@ -18,7 +18,7 @@ The sandbox is code, not a provisioned AWS environment. It uses a dedicated AWS 
 
 1. Authenticate the AWS CLI to an isolated account. `aws sts get-caller-identity` confirms the account. Create/select an existing IAM administrator role and supply that role ARN in `bootstrap_admin_role_arns`; the Terraform caller is not implicitly made a cluster administrator.
 2. Review/apply the independent bootstrap state bucket. Protect its local state and back it up securely. Copy the backend and tfvars examples and replace placeholders. No credentials belong in those files.
-3. Before apply, run `aws eks describe-cluster-versions --region ca-central-1` and review EKS support dates. The composition defaults to 1.35; compatible managed add-ons resolve through AWS at plan time and can be explicitly pinned. STANDARD support is configured.
+3. Before apply, run `aws eks describe-cluster-versions --region us-east-1` and review EKS support dates. The composition defaults to 1.35; compatible managed add-ons resolve through AWS at plan time and can be explicitly pinned. STANDARD support is configured.
 4. Initialize the environment S3 backend with native lockfiles, review a saved plan, and apply it manually. The provider's account allowlist rejects credentials for a different account. Provisioning requires network/EKS/EC2/IAM/DynamoDB/S3/CloudTrail/CloudWatch permissions and `iam:PassRole`; the release roles are deliberately insufficient for provisioning.
 5. Check the operations host SSM managed-instance status and cloud-init completion. Install remaining CLI/runner tooling from the delivery instructions. Use the documented VPC access route to bootstrap Kubernetes as the supplied administrator role. No public Kubernetes endpoint is needed.
 6. Apply initial namespace/service-account/RBAC/config/Secret/Deployment manifests. The workload association already names `mybank/mybank-api`. Configure GitHub variables and register the trusted private runner. Do not run untrusted PR jobs there.
@@ -36,7 +36,7 @@ VPC CNI network policy is enabled in standard mode for reliable system-pod start
 
 ## Cost and availability
 
-This is a billable AWS lab. Continuous costs include EKS control plane, two worker instances, optional operations instance, EBS, NAT gateway and public IPv4 allocation. Usage costs include NAT processing/cross-AZ traffic, CloudWatch logs, CloudTrail data events, DynamoDB operations/PITR, S3 and ECR storage. Single NAT and small nodes are intentional lab compromises. Stopping nodes or the operations host does not stop EKS/NAT charges. Use the [AWS Pricing Calculator](https://calculator.aws/) with ca-central-1 settings and set an account budget before apply; this repository makes no fixed-cost promise.
+This is a billable AWS lab. Continuous costs include EKS control plane, two worker instances, optional operations instance, EBS, NAT gateway and public IPv4 allocation. Usage costs include NAT processing/cross-AZ traffic, CloudWatch logs, CloudTrail data events, DynamoDB operations/PITR, S3 and ECR storage. Single NAT and small nodes are intentional lab compromises. Stopping nodes or the operations host does not stop EKS/NAT charges. Use the [AWS Pricing Calculator](https://calculator.aws/) with us-east-1 settings and set an account budget before apply; this repository makes no fixed-cost promise.
 
 ## Teardown and evidence
 
