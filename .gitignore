@@ -17,3 +17,6 @@ identity/generated/
 .cache/
 .uv-cache/
 dist/
+*_credentials*.csv
+.playwright-mcp/
+docs/d2/generated/

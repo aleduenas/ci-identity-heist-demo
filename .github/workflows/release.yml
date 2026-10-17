@@ -24,6 +24,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      MYBANK_OIDC_RUN_CONTEXT: ${{ vars.MYBANK_OIDC_RUN_CONTEXT }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:

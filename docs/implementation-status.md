@@ -1,6 +1,24 @@
 # Implementation handoff
 
-Updated: 2026-10-13.
+Updated: 2026-10-17.
+
+## Active D2 continuation
+
+Use [the D2 handoff checklist](d2/HANDOFF.md) as the current resumable ledger.
+The user authorized full AWS/GitHub D2 setup, then requested a handoff before further provisioning.
+
+- Verified temporary CLI/SDK access as sandbox user `codex-builder` in account `404824402451`.
+- Created a plain USD20 monthly AWS budget that emails an alert (alert only; nothing is shut down).
+- Applied private state storage and narrow bootstrap IAM role (7 creates).
+- Full private EKS/D2 environment: reviewed saved plan only, 65 creates/9 data reads; **not applied**.
+- New D2 infrastructure, collector, workflow, tests and optional OIDC migration are local/uncommitted.
+  GitHub still has default immutable subjects and no repository variables; no new CI/deployment ran.
+- Current local checks: Ruff passed; **93 pytest tests passed**; **6 delivery checks passed** with
+  filesystem escalation; formatting and all three Terraform roots validated.
+- Budget alerts are delayed billing telemetry, not a spending cap. EKS rollout and N2/A2/B2 remain unvalidated.
+
+The sections below retain the original implementation history; current live facts above supersede
+older statements that no AWS resources have been applied or all working changes were pushed.
 
 ## Completed
 
@@ -17,8 +35,8 @@ Updated: 2026-10-13.
 
 ## External prerequisites
 
-- An AWS sandbox account and authenticated operator; no AWS resources have been applied.
-- AWS CLI v2 and Session Manager plugin, plus an existing bootstrap administrator IAM role.
+- AWS account, temporary CLI/SDK access, Session Manager plugin and bootstrap role are now prepared;
+  see the current checklist before using them because login can expire.
 - Operator registration of the trusted runner on the provisioned private operations host.
 - Account-specific Keycloak realm metadata and second Terraform apply for SAML; no paid/existing IdP required.
 - GitHub repository variables from Terraform outputs; deployment remains disabled until bootstrap is complete.
@@ -37,14 +55,19 @@ Updated: 2026-10-13.
 - [Final GitHub hosted CI](https://github.com/aleduenas/mybank-eks-sandbox/actions/runs/38353103026): application tests/container smoke, Terraform, Kubernetes and live GitHub OIDC claim-format checks all passed on code commit `05d8535`. AWS publish/deploy skipped as intended while repository variables are unset. Earlier implementation CI also passed. The final documentation-only handoff commit skips redundant CI.
 - GitHub API verified repository remains private and uses immutable OIDC subjects; AWS trust updated to the exact owner/repository IDs, with a hosted nonsecret claim-format check.
 
-No AWS plan/apply, STS federation, live IAM/CNI enforcement, CloudTrail delivery or EKS rollout has been performed. Local signatures were checked for presence, not independently verified cryptographically. Temporary test containers and generated identity artifacts are removed after verification.
+At the original 2026-10-13 handoff, no AWS plan/apply, STS federation, live IAM/CNI enforcement,
+CloudTrail delivery or EKS rollout had been performed. The 2026-10-17 bootstrap apply and
+local-development CLI login are recorded above; they do not establish application deployment,
+employee SAML federation, live workload enforcement or D2 detection. Original local SAML signatures
+were checked for presence, not independently verified cryptographically.
 
 ## Repository layout verification
 
 - Private visibility and immutable OIDC settings were verified through GitHub's repository API.
 - All application, identity, script, test and Terraform code files are 116 lines or fewer. Transfer invariants and recovery tests are separate modules.
 - Local documentation links resolve; Git attributes preserve Linux line endings, including EC2 user-data shell scripts.
-- Working tree is committed and pushed; ignored operator/generated secrets and test volumes are excluded.
+- Original implementation was committed and pushed. Current D2 additions are uncommitted/unpushed;
+  ignored credentials, local state/plans, login cache and generated evidence remain excluded.
 
 ## Continuation checklist
 

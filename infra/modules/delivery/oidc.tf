@@ -7,14 +7,22 @@ resource "aws_iam_openid_connect_provider" "github" {
 locals {
   provider_arn = var.existing_github_oidc_provider_arn != null ? var.existing_github_oidc_provider_arn : aws_iam_openid_connect_provider.github[0].arn
   subject      = "${var.github_oidc_subject_prefix}:ref:refs/heads/main"
+  subjects = var.github_oidc_include_run_context ? [for event in ["push", "workflow_dispatch"] :
+    "${local.subject}:event_name:${event}:run_id:*:run_attempt:*"
+  ] : [local.subject]
+  conditions = merge({
+    StringEquals = merge(
+      { "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com" },
+      var.github_oidc_include_run_context ? {} : { "token.actions.githubusercontent.com:sub" = local.subject }
+    )
+    }, var.github_oidc_include_run_context ? {
+    StringLike = { "token.actions.githubusercontent.com:sub" = local.subjects }
+  } : {})
   trust = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow", Action = "sts:AssumeRoleWithWebIdentity", Principal = { Federated = local.provider_arn }
-      Condition = { StringEquals = {
-        "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-        "token.actions.githubusercontent.com:sub" = local.subject
-      } }
+      Effect    = "Allow", Action = "sts:AssumeRoleWithWebIdentity", Principal = { Federated = local.provider_arn }
+      Condition = local.conditions
     }]
   })
 }

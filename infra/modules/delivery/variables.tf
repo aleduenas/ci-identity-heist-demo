@@ -21,6 +21,11 @@ variable "github_oidc_subject_prefix" {
 variable "cluster_name" {
   type = string
 }
+variable "github_oidc_include_run_context" {
+  description = "Use the reviewed custom repo/context/event/run/attempt subject while keeping release roles main-only."
+  type        = bool
+  default     = false
+}
 variable "cluster_arn" {
   type = string
 }

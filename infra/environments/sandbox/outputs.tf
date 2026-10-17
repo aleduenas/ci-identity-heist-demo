@@ -61,3 +61,6 @@ output "cloudtrail_arn" {
 output "github_oidc_subject" {
   value = module.delivery.github_oidc_subject
 }
+output "github_oidc_subjects" {
+  value = module.delivery.github_oidc_subjects
+}

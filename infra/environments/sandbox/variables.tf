@@ -62,3 +62,8 @@ variable "github_oidc_subject_prefix" {
   type        = string
   default     = "repo:aleduenas@54992507/mybank-eks-sandbox@1416500552"
 }
+variable "github_oidc_include_run_context" {
+  description = "Match the coordinated custom GitHub subject containing signed event, run and attempt identifiers."
+  type        = bool
+  default     = false
+}
