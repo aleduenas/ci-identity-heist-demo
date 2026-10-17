@@ -10,7 +10,7 @@ import boto3
 from botocore import UNSIGNED
 from botocore.config import Config
 
-MARKER = "a2-simulated-stolen-agent-change"
+MARKER = "b2-repeat-after-main-only-trust"
 
 
 def main():
