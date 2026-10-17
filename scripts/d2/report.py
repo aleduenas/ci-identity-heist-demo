@@ -26,6 +26,7 @@ def main():
         event_time = result.get("event_time_utc")
         rows.append({
             "decision": result["decision"], "event_id": result.get("event_id"),
+            "event_time_utc": event_time, "github_event": result.get("github_event"),
             "run_url": result.get("run_url"),
             "alert": (entry.get("alert") or {}).get("title"),
             "observed_log_delay_seconds": seconds(

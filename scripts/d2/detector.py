@@ -1,5 +1,6 @@
 """Pure D2 decisions over independently collected, allowlisted evidence."""
 
+from .evidence import role_arn as event_role_arn
 from .subject import parse_subject
 
 
@@ -12,10 +13,19 @@ def classify(event: dict, run: dict | None, *, role_arn: str, repository: str,
 
     if (event.get("eventSource"), event.get("eventName")) != (
         "sts.amazonaws.com", "AssumeRoleWithWebIdentity",
-    ) or (event.get("requestParameters") or {}).get("roleArn") != role_arn:
+    ) or event_role_arn(event) != role_arn:
         return result("out_of_scope", "Not the selected STS operation and role")
     if event.get("errorCode"):
-        return result("assumption_denied", "AWS did not issue the requested credentials")
+        # Denials carry no response; AWS records the rejected subject as the web-identity user.
+        rejected = (event.get("userIdentity") or {}).get("userName")
+        try:
+            context = parse_subject(rejected or "", subject_prefix)
+            details = {"run_id": context.run_id, "run_attempt": context.attempt,
+                       "github_event": context.event}
+        except ValueError:
+            details = {}
+        return result("assumption_denied", "AWS did not issue the requested credentials",
+                      error_code=event.get("errorCode"), rejected_subject=rejected, **details)
     response = event.get("responseElements") or {}
     role_account = role_arn.split(":")[4]
     provider = f"arn:aws:iam::{role_account}:oidc-provider/token.actions.githubusercontent.com"

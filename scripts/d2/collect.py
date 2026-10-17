@@ -10,7 +10,7 @@ from pathlib import Path
 
 from .alert import render
 from .detector import classify
-from .evidence import safe_event, utc_now
+from .evidence import role_arn, safe_event, utc_now
 from .github import get_run
 from .subject import parse_subject
 
@@ -95,7 +95,7 @@ def main():
     while True:
         end = timestamp(args.end or utc_now())
         for event in lookup(client, start, end):
-            if (event.get("requestParameters") or {}).get("roleArn") != args.role_arn:
+            if role_arn(event) != args.role_arn:
                 continue
             event_id = event.get("eventID")
             if not event_id:

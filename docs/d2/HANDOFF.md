@@ -1,7 +1,8 @@
 # D2 sandbox: ongoing handoff and completion checklist
 
-**Last checked:** 2026-10-17, 17:19 UTC / 1:19 p.m. America/Toronto.  
-**Current stopping point:** CLI authentication, Terraform-state/bootstrap resources and a plain USD20 email budget alert are live. The full EKS/D2 environment has a reviewed saved plan but **has not been applied**. The user requested this handoff to conserve session usage. Do not interpret local implementation or a saved plan as deployed infrastructure.
+**Last checked:** 2026-10-17, ~18:50 UTC.
+
+**Current stopping point:** D2 is **live-validated and torn down**. The full private sandbox was applied (65 resources), and N2, A2, B2 and a live context-gap check passed with independent evidence ([sanitized summary](evidence.md)). Lab compute and network were then destroyed. Retained: state bucket, bootstrap role, USD20 budget, and the audit S3 bucket (CloudTrail evidence, still in sandbox state because `force_destroy=false`). The application rollout and private runner (§7D) were deliberately not performed. The draft says the D2 detector does not need them.
 
 This is the working checklist for future sessions and agents. Mark an item complete only after its stated result is observed. Add evidence, UTC time and any limitation to the session log at the end. Preserve completed history; explain reversals or revalidation rather than silently changing their meaning.
 
@@ -11,8 +12,8 @@ This is the working checklist for future sessions and agents. Mark an item compl
 - [x] Interpret “scenario 2” as **D2: detect PR-validation jobs obtaining deployment-role credentials**.
 - [x] User explicitly requested CLI access first; local CLI and SDK authentication now work.
 - [x] A normal USD20 monthly budget email alert is in place (see §2).
-- [ ] Finish the full private AWS application environment and GitHub delivery; do not shrink the user's full-environment request to a mock-only detection demo.
-- [ ] Create the mock-agent IAM role when the sandbox is applied. No fake AI application, real infostealer, or fake employee is required. An IAM role cannot push GitHub PRs: document the operator-authored PR as the simulated stolen-agent action.
+- [x] Full private AWS environment applied and D2 delivery path exercised (2026-10-17). The application rollout/runner (§7D) was deferred by the user's direction to the simplest accurate D2 demo; it is re-runnable from the same inputs.
+- [x] Create the mock-agent IAM role when the sandbox is applied. No fake AI application, real infostealer, or fake employee is required. An IAM role cannot push GitHub PRs: document the operator-authored PR as the simulated stolen-agent action.
 
 Read [AGENTS.md](../../AGENTS.md), [architecture](../architecture.md), [implementation status](../implementation-status.md), this file, and the [D2 runbook](README.md) before continuing.
 
@@ -42,10 +43,10 @@ AWS Budgets data is delayed. EKS, NAT and storage keep costing until the lab is 
 | Existing caller policies | `AdministratorAccess`, `SignInLocalDevelopmentAccess` |
 | Repository | `aleduenas/mybank-eks-sandbox`, private, default branch `main` |
 | GitHub IDs | owner `54992507`, repository `1416500552` |
-| Git HEAD at handoff | `61fcdad6c7cf7990ee8e1eaa34436342f52228a2` |
-| GitHub OIDC live setting | `use_default=true`, `use_immutable_subject=true`; custom run context **not configured** |
-| Live repository variables | Empty, verified through GitHub API; publishing/deployment remain gated off |
-| Live EKS clusters in target Region | None, verified at handoff |
+| Git HEAD at handoff | see `git log`; D2 work committed and pushed to `main` (e1d0074 onwards) |
+| GitHub OIDC live setting | Custom `repo, context, event_name, run_id, run_attempt` with immutable subjects (previous: `use_default=true`, `use_immutable_subject=true`) |
+| Live repository variables | `MYBANK_OIDC_RUN_CONTEXT=true` only (pairs with the custom template); `D2_DEMO_ROLE_ARN` removed after the exercise |
+| Live EKS clusters in target Region | None: created for the exercise and destroyed at ~18:45 UTC |
 
 ### CLI and SDK access
 
@@ -84,11 +85,11 @@ GitHub API auth works through Windows Git Credential Manager and [the helper](..
 - [x] Bootstrap apply later added the USD20 email budget (1 create).
 - [ ] Do not delete local bootstrap state. This root intentionally has independent local state and is not removed with lab compute.
 
-### Full sandbox: only planned
+### Full sandbox: applied, exercised, destroyed
 
 The saved plan has **65 creates, 9 data reads, no changes/destroys**. It includes private EKS 1.35 (AWS API confirmed standard support), two on-demand workers, operations host, NAT/EIP, ECR, three synthetic DynamoDB tables, auditing, Pod Identity, baseline build/deploy roles and isolated D2/mock roles. The EKS API is private; public endpoint is false.
 
-The exact main/PR role and image access still require live validation. No paid EKS/EC2/NAT lab resources, application rollout, runner registration, fixture seeding, actual GitHub role assumption, or detection result has occurred.
+Applied 2026-10-17 (65 added). Verified EKS ACTIVE 1.35 with private endpoint only, 2 nodes, 4 add-ons ACTIVE, ops host SSM Online. The D2 exercise ran (see §9). It was then destroyed: 64 resources removed, and the audit bucket refused deletion (`BucketNotEmpty`), as designed. No EKS, EC2, NAT, EIP, EBS, DynamoDB table, trail, EKS log group or GitHub OIDC provider remains. Application rollout, runner registration and fixture seeding did not occur.
 
 ## 5. Local files and state needed to resume
 
@@ -115,8 +116,8 @@ Current intended sandbox inputs: name `mybank-sandbox`, Region `ca-central-1`, a
 - [x] `infra/modules/d2/` and sandbox `d2*.tf`: disabled-by-default module, separate exercise deployment role and optional mock-agent role.
 - [x] `scripts/d2/`, `tests/d2/`, `.github/workflows/d2-demo.yml`: harmless identity probe, independent collector, detector, replay and report.
 - [x] Coordinated optional baseline subject migration in delivery module, sandbox variables/access, release workflow and `scripts/checks/oidc_claims.py`.
-- [ ] Review, commit and push appropriate source changes. All work from this deployment session is still local. `docs/plan/` is also untracked from earlier drafting; preserve the author's source and do not stage credentials/generated artifacts by using a blanket add.
-- [ ] Update component docs for changed bootstrap inputs and subject-output semantics before committing.
+- [x] Review, commit and push appropriate source changes. All work from this deployment session is still local. `docs/plan/` is also untracked from earlier drafting; preserve the author's source and do not stage credentials/generated artifacts by using a blanket add.
+- [x] Update component docs for changed bootstrap inputs and subject-output semantics before committing.
 
 Baseline `github_oidc_subject` now returns the first accepted subject/pattern; `github_oidc_subjects` returns the list. Custom mode is opt-in in code; the ignored intended deployment enables it. The checker verifies decoded format only, not an independent JWT signature or AWS acceptance.
 
@@ -124,23 +125,23 @@ Baseline `github_oidc_subject` now returns the first accepted subject/pattern; `
 
 ### A. Resume and protect the account
 
-- [ ] Read this handoff and current Git diff; preserve uncommitted work from all agents.
-- [ ] Authenticate via CLI and verify caller/account.
+- [x] Read this handoff and current Git diff; preserve uncommitted work from all agents.
+- [x] Authenticate via CLI and verify caller/account.
 
 ### B. Finish repository integration and coordinated OIDC setup
 
-- [ ] Run/review checks in §8; fix genuine failures before pushing. No new hosted CI has run for this work.
-- [ ] Review and commit only intended code/docs; confirm ignored secrets/state/generated files remain excluded and repo remains private.
-- [ ] Prepare baseline main-only custom subject trusts and the isolated exercise role together. The current live GitHub template is still the old default.
-- [ ] Set the repository OIDC template to `{"use_default":false,"include_claim_keys":["repo","context","event_name","run_id","run_attempt"]}` and record the previous setting for coordinated restoration.
-- [ ] Set repository variable `MYBANK_OIDC_RUN_CONTEXT=true` for the migrated release checker. Confirm the actual emitted subject matches the intended immutable prefix and template; do not guess.
-- [ ] Never broaden baseline build/deploy roles to PRs. Intended prefix is `repo:aleduenas@54992507/mybank-eks-sandbox@1416500552`.
+- [x] Run/review checks in §8; fix genuine failures before pushing. No new hosted CI has run for this work.
+- [x] Review and commit only intended code/docs; confirm ignored secrets/state/generated files remain excluded and repo remains private.
+- [x] Prepare baseline main-only custom subject trusts and the isolated exercise role together. The current live GitHub template is still the old default.
+- [x] Set the repository OIDC template to `{"use_default":false,"include_claim_keys":["repo","context","event_name","run_id","run_attempt"]}` and record the previous setting for coordinated restoration.
+- [x] Set repository variable `MYBANK_OIDC_RUN_CONTEXT=true` for the migrated release checker. Confirm the actual emitted subject matches the intended immutable prefix and template; do not guess.
+- [x] Never broaden baseline build/deploy roles to PRs. Intended prefix is `repo:aleduenas@54992507/mybank-eks-sandbox@1416500552`.
 
 ### C. Provision the full private sandbox
 
-- [ ] Replan using current inputs; review resources, private endpoints, identity scopes and standard-support version. Do not blindly apply the old saved plan after drift.
-- [ ] Apply the full root; retain new real outputs in ignored `.cache/outputs.json`.
-- [ ] Verify EKS ACTIVE, nodes/add-ons healthy, operations host SSM Online, runtime identity association and database endpoint/routing.
+- [x] Replan using current inputs; review resources, private endpoints, identity scopes and standard-support version. Do not blindly apply the old saved plan after drift.
+- [x] Apply the full root; retain new real outputs in ignored `.cache/outputs.json`.
+- [x] Verify EKS ACTIVE, nodes/add-ons healthy, operations host SSM Online, runtime identity association and database endpoint/routing.
 
 Suggested local commands, after checking current inputs:
 
@@ -154,6 +155,8 @@ Quote Terraform arguments containing paths/equals signs in Windows PowerShell; u
 
 ### D. Make the normal application and release path work
 
+*Deferred on 2026-10-17. The user chose the simplest accurate D2 demo, and the D2 draft does not need the application rollout. Re-apply the sandbox from `.cache/sandbox.tfvars.json` before doing any of these.*
+
 - [ ] Configure `AWS_REGION`, `AWS_BUILD_ROLE_ARN`, `ECR_REPOSITORY_URL` from real outputs. Keep `DEPLOY_ENABLED` off until bootstrap/runner are ready.
 - [ ] Push/dispatch a trusted main release; validate OIDC format/actual AWS assumption, publish the immutable image and retain its digest.
 - [ ] Install missing AWS CLI/kubectl on the private operations host and register the trusted GitHub runner. Existing user-data does not perform those steps. Keep registration tokens out of Git, command logs and evidence.
@@ -162,46 +165,47 @@ Quote Terraform arguments containing paths/equals signs in Windows PowerShell; u
 - [ ] Seed only synthetic records and verify readiness, authenticated transaction, idempotent retry, conflict and overdraft rollback.
 - [ ] Verify engineer/deployer restrictions and actual CNI enforcement. A manifest or admin impersonation check alone is not proof.
 - [ ] Configure `AWS_DEPLOY_ROLE_ARN`, `EKS_CLUSTER_NAME`; enable deployment only after first bootstrap and runner acceptance. Prove one normal main release.
-- [ ] Explicitly decide/record whether optional employee SAML federation is needed for this D2 acceptance; it is not currently enabled and must not be claimed as tested.
+- [x] Decided: SAML federation is not needed for D2 acceptance and was not enabled or tested.
 
 ### E. Exercise D2 and collect independent evidence
 
-- [ ] Confirm the same isolated `mybank-sandbox-d2-demo-deploy` role is used for N2/main and A2/PR, with real namespace deployer access. Its IAM permissions alone do not prove network reachability.
-- [ ] Set repository variable `D2_DEMO_ROLE_ARN` to its real output. Use hosted runners only for the PR identity probe; do not expose the private runner or cluster endpoint.
-- [ ] Assume/inspect the mock-agent role and prove no direct customer-table/deployment bypass. Keep the GitHub simulated actor distinction explicit.
-- [ ] Arrange a separate read-only GitHub collector credential and trusted execution checkout/process. The operator API helper's broad credential is not a demonstrated least-privilege detector identity.
-- [ ] Start collector polling **before** running comparisons; use actual UTC start/end, regional STS and CloudTrail lookup. Keep raw credentials/JWT/sessionToken fields out of retained events.
-- [ ] N2: dispatch main exercise job; prove role issuance and independent `expected_release` classification.
-- [ ] A2: operator creates an open, unreviewed same-repo PR and changes the harmless marker in `scripts/d2/demo_probe.py`; prove pre-review execution, successful same-role issuance and independent `pr_role_misuse` alert.
-- [ ] Confirm release-looking session naming cannot fool the detector. Its linkage is AWS's accepted signed subject plus independently fetched GitHub run/attempt metadata.
-- [ ] Verify actual CloudTrail provider/audience/subject field shapes. The proposed custom subject and collector assumptions have not yet been demonstrated live.
-- [ ] Test missing/mismatched context yields `context_not_verified`, not an invented trusted release.
-- [ ] Optional B2: remove PR trust only from the exercise role, repeat PR and main; prove PR denial and continued main success. Record this as separate prevention evidence.
-- [ ] Produce sanitized report with action/log/alert times, observed detection/ingestion delay, limitations and legitimate-case behavior. Do not infer production rates or full-chain success.
+- [x] Confirm the same isolated `mybank-sandbox-d2-demo-deploy` role is used for N2/main and A2/PR, with real namespace deployer access. Its IAM permissions alone do not prove network reachability.
+- [x] Set repository variable `D2_DEMO_ROLE_ARN` to its real output. Use hosted runners only for the PR identity probe; do not expose the private runner or cluster endpoint.
+- [x] Assume/inspect the mock-agent role and prove no direct customer-table/deployment bypass. Keep the GitHub simulated actor distinction explicit.
+- [~] Trusted separate process used; the user chose the existing operator credential (in-memory only) over a dedicated `Actions: read` token. Recorded as a limitation in [evidence](evidence.md). Arrange a separate read-only GitHub collector credential and trusted execution checkout/process. The operator API helper's broad credential is not a demonstrated least-privilege detector identity.
+- [x] Start collector polling **before** running comparisons; use actual UTC start/end, regional STS and CloudTrail lookup. Keep raw credentials/JWT/sessionToken fields out of retained events.
+- [x] N2: dispatch main exercise job; prove role issuance and independent `expected_release` classification.
+- [x] A2: operator creates an open, unreviewed same-repo PR and changes the harmless marker in `scripts/d2/demo_probe.py`; prove pre-review execution, successful same-role issuance and independent `pr_role_misuse` alert.
+- [x] Confirm release-looking session naming cannot fool the detector. Its linkage is AWS's accepted signed subject plus independently fetched GitHub run/attempt metadata.
+- [x] Verify actual CloudTrail provider/audience/subject field shapes. The proposed custom subject and collector assumptions have not yet been demonstrated live.
+- [x] Test missing/mismatched context yields `context_not_verified`, not an invented trusted release.
+- [x] Optional B2: remove PR trust only from the exercise role, repeat PR and main; prove PR denial and continued main success. Record this as separate prevention evidence.
+- [x] Produce sanitized report with action/log/alert times, observed detection/ingestion delay, limitations and legitimate-case behavior. Do not infer production rates or full-chain success.
 
 The live runbook includes collector/report commands. Use `D2_GITHUB_TOKEN` only in the trusted operator process, loaded without printing/storing it. The planned proof stops at harmless STS identity checks; it does not require a malicious container or exfiltration. Complete the normal backend environment for the user's requested context, while keeping later attacker actions untested unless separately exercised.
 
 ### F. Finish, retain evidence and stop costs
 
-- [ ] Update this checklist, [implementation ledger](../implementation-status.md), D2 runbook and AI note with actual observations and remaining gaps.
+- [x] Update this checklist, [implementation ledger](../implementation-status.md), D2 runbook and AI note with actual observations and remaining gaps.
 - [ ] Prepare the final short assignment artifact/write-up separately from detailed planning docs; second path remains deferred until the author resumes it.
-- [ ] Disable/remove exercise variables and PR-role trust when no longer needed. Restore OIDC settings, baseline trust and checker **together** if reverting the template.
-- [ ] Preserve selected sanitized evidence, then tear down lab compute/network using [teardown](../teardown.md); keep state until cleanup is verified.
-- [ ] Verify node groups/cluster, EC2, NAT and EIP removal, and inventory retained tables, images, volumes, logs and S3 versions. Report ongoing residual costs.
-- [ ] Reconcile Terraform drift/state, runner registration, tokens and temporary login. Do not erase state before destroying resources.
+- [x] Disable/remove exercise variables and PR-role trust when no longer needed. Restore OIDC settings, baseline trust and checker **together** if reverting the template.
+- [x] Preserve selected sanitized evidence, then tear down lab compute/network using [teardown](../teardown.md); keep state until cleanup is verified.
+- [x] Verify node groups/cluster, EC2, NAT and EIP removal, and inventory retained tables, images, volumes, logs and S3 versions. Report ongoing residual costs.
+- [ ] Remaining: the audit bucket is still in sandbox state (65 CloudTrail object versions, cents per month). Empty it deliberately and re-run destroy only when the evidence is no longer wanted. No runner was registered. Temporary CLI login expires on its own. Reconcile Terraform drift/state, runner registration, tokens and temporary login. Do not erase state before destroying resources.
 
 ## 8. Verification snapshot and tool caveats
 
 | Check | Observed result |
 | --- | --- |
 | `ruff check app tests identity scripts` | Passed |
-| `pytest tests` | **67 passed**, one existing Starlette/HTTPX deprecation warning |
+| `pytest tests` | **70 passed** on 2026-10-17 18:40 UTC (bare `pytest`, as CI runs it), one existing Starlette/HTTPX deprecation warning |
 | Delivery unittest discovery | **6 passed** outside the filesystem sandbox |
 | Terraform formatting | Passed recursively |
 | Terraform validation | Bootstrap and sandbox roots passed |
-| D2 unit tests | 22 tests, included in the 67; mock replay is not live proof |
+| D2 unit tests | 25 tests, included in the 70 (alert rendering and the observed live denial shape added); mock replay is not live proof |
 | OIDC format tests | 13 tests, included in the 67 |
-| AWS full-lab apply / GitHub new CI / N2-A2-B2 | **Not performed** |
+| Hosted CI | Main release run 39056071870 green (checks + `verify-identity`, default subject); 39056882803 green with custom subject |
+| AWS full-lab apply / N2-A2-B2 | **Performed and passed** 2026-10-17; see [evidence](evidence.md). Lab destroyed afterwards |
 
 `kubectl kustomize` could not resolve the workspace directory inside the restricted process (“Access is denied”). The identical delivery tests passed with normal tool escalation; do not change security manifests to work around that tool restriction. Terraform provider initialization also needed escalation for Windows Temp access. Downloads were verified before extraction. Docker daemon access was denied in the restricted process; no new container smoke was completed in this session.
 
@@ -211,4 +215,5 @@ The live runbook includes collector/report commands. Use `D2_GITHUB_TOKEN` only 
 | --- | --- | --- | --- |
 | 2026-10-17, through 17:19 UTC | Initial live setup | Temporary CLI/SDK auth; state/bootstrap apply; full sandbox planned; tests and delivery checks passed | User requested handoff before further provisioning. Full lab not applied, GitHub unchanged, code uncommitted. Replan and apply the full sandbox next |
 | 2026-10-17, later | Budget alert | Plain USD20 email budget added via bootstrap root; 67 tests, Ruff, fmt and validation pass | Replan and apply the full sandbox |
+| 2026-10-17, 17:50–18:50 UTC | D2 completion | Doc gaps closed; alert renderer added; CI pytest-path fix; pushed e1d0074/def9b54. Baseline release check passed on default subject, then the OIDC template and `MYBANK_OIDC_RUN_CONTEXT` were switched together; release run 39056882803 decoded the exact custom subject. Applied 65 resources; health verified; mock agent inspect-only. N2 39057140370 `expected_release`; A2 PR #10 run 39057194544 `pr_role_misuse`, TTD 31.1 s; B2 PR 39057413125 denied (`assumption_denied`) and main 39057409655 `expected_release`; live context gap gave `context_not_verified`. Fixed live denial shape (role in `resources[]`). PR #10 closed unmerged, `D2_DEMO_ROLE_ARN` removed, lab destroyed except the audit bucket | §7D app rollout/runner not done. Custom OIDC template and checker variable left on as a coherent pair; restore both together if reverting. Write the short assignment artifact from [evidence](evidence.md) |
 | TBD | Next session | Add completed checkbox IDs/section, resource/run IDs, UTC and sanitized evidence | Record blocker, current spend and concrete next action |

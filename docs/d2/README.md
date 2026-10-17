@@ -2,7 +2,7 @@
 
 This implementation evaluates one boundary in the immutable concept: unreviewed PR code obtains the AWS identity intended for deployment. The demonstration uses an intentionally scoped exercise role, a harmless script, and independently collected evidence. It does not execute an infostealer, impersonate a real AI agent, deploy an attacker container, or access customer data. The operator authors the simulated PR. A separately provisioned mock IAM role represents the concept's starting identity; AWS IAM does not itself grant GitHub access.
 
-**Status:** Local D2 implementation and fixtures. The state/bootstrap resources and a USD20 email budget alert are live; EKS and exercise roles are not yet applied. Follow the [ongoing handoff checklist](HANDOFF.md) for exact current state and continuation. Live role issuance, GitHub subject customization and detection timing remain unvalidated. The full attack chain remains unproven.
+**Status:** Live-validated 2026-10-17. N2 `expected_release`, A2 `pr_role_misuse` with an observed TTD of about 31 s, B2 PR denial with main still working, and a live `context_not_verified` gap. See the [sanitized evidence](evidence.md) and [handoff](HANDOFF.md). The lab compute was torn down afterwards. The full attack chain (deployment change, data read, egress) remains unproven.
 
 ## Components and authority
 
@@ -76,6 +76,8 @@ python -m scripts.d2.collect --role-arn $env:D2_DEMO_ROLE_ARN --repository aledu
 Here `D2_DEMO_ROLE_ARN` in the local process is the reviewed exercise output, not a secret. The collector uses the regional CloudTrail `LookupEvents` API, follows every returned page, queries only the relevant operation and time window, filters the exact role, and deduplicates event IDs during that invocation. Page requests are spaced to respect the service's two-request-per-second quota. Start a new output file for each independent observation session; restarting the collector resets its in-memory first-observed times.
 
 Use regional STS in `ca-central-1`, as the probe does, so collection queries the matching region. CloudTrail Event History can provide these management events without deploying a new trail. If a separate future implementation uses EventBridge, STS assumptions are read-only management events: a normal `ENABLED` rule is insufficient; it needs an active logging trail and `ENABLED_WITH_ALL_CLOUDTRAIL_MANAGEMENT_EVENTS`.
+
+Live CloudTrail records a **denied** request with null `requestParameters`/`responseElements`. The role is then read from `resources[]` (`AWS::IAM::Role`) and the rejected subject from `userIdentity.userName`, so denials are recorded as `assumption_denied` and linked to their run.
 
 For every successful event, the collector obtains `responseElements.subjectFromWebIdentityToken`, checks the expected GitHub provider/audience and issued-role ARN, and fetches `GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt}`. It verifies immutable owner/repository IDs, exact run and attempt, and event type. Main use must also match `.github/workflows/d2-demo.yml` and branch `main`. A PR-linked success produces `pr_role_misuse`; missing, unsupported or conflicting context produces `context_not_verified`. HTTP errors remain visible without echoing credentials or response bodies.
 

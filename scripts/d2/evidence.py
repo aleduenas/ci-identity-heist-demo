@@ -7,6 +7,15 @@ def utc_now() -> str:
     return datetime.now(UTC).isoformat()
 
 
+def role_arn(event: dict) -> str | None:
+    """Successes record requestParameters.roleArn; live denials record it only in resources."""
+    requested = (event.get("requestParameters") or {}).get("roleArn")
+    if requested:
+        return requested
+    return next((item.get("ARN") for item in event.get("resources") or []
+                 if item.get("type") == "AWS::IAM::Role"), None)
+
+
 def safe_event(event: dict) -> dict:
     """Retain identity context, excluding the entire STS credentials object."""
     response = event.get("responseElements") or {}
@@ -19,7 +28,10 @@ def safe_event(event: dict) -> dict:
         "recipientAccountId": event.get("recipientAccountId"),
         "errorCode": event.get("errorCode"),
         "requestParameters": {"roleArn": request.get("roleArn")},
-        "userIdentity": {"identityProvider": identity.get("identityProvider")},
+        "resources": [{"type": item.get("type"), "ARN": item.get("ARN")}
+                      for item in event.get("resources") or []],
+        "userIdentity": {"identityProvider": identity.get("identityProvider"),
+                         "userName": identity.get("userName")},
         "responseElements": {
             "subjectFromWebIdentityToken": response.get("subjectFromWebIdentityToken"),
             "provider": response.get("provider"), "audience": response.get("audience"),

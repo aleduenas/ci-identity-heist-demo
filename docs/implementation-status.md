@@ -4,18 +4,20 @@ Updated: 2026-10-17.
 
 ## Active D2 continuation
 
-Use [the D2 handoff checklist](d2/HANDOFF.md) as the current resumable ledger.
-The user authorized full AWS/GitHub D2 setup, then requested a handoff before further provisioning.
+Use [the D2 handoff checklist](d2/HANDOFF.md) as the current resumable ledger and [D2 evidence](d2/evidence.md) for results.
 
 - Verified temporary CLI/SDK access as sandbox user `codex-builder` in account `404824402451`.
-- Created a plain USD20 monthly AWS budget that emails an alert (alert only; nothing is shut down).
-- Applied private state storage and narrow bootstrap IAM role (7 creates).
-- Full private EKS/D2 environment: reviewed saved plan only, 65 creates/9 data reads; **not applied**.
-- New D2 infrastructure, collector, workflow, tests and optional OIDC migration are local/uncommitted.
-  GitHub still has default immutable subjects and no repository variables; no new CI/deployment ran.
-- Current local checks: Ruff passed; **93 pytest tests passed**; **6 delivery checks passed** with
-  filesystem escalation; formatting and all three Terraform roots validated.
-- Budget alerts are delayed billing telemetry, not a spending cap. EKS rollout and N2/A2/B2 remain unvalidated.
+- Bootstrap state storage, narrow bootstrap role and a plain USD20 budget email alert are live (alert only).
+- D2 code, OIDC run-context migration and docs are committed and pushed to `main`; hosted CI is green.
+- 2026-10-17: the full private sandbox was **applied** (65 resources, EKS 1.35 private endpoint only, healthy
+  nodes, add-ons and SSM). The GitHub OIDC template and `MYBANK_OIDC_RUN_CONTEXT` were switched together, and the
+  emitted subject was verified live.
+- Live D2 results: N2 `expected_release`; A2 unreviewed PR `pr_role_misuse` with an observed TTD of 31.1 s; B2
+  PR denied while main succeeds; live missing-context gives `context_not_verified`. The mock-agent role was verified inspect-only.
+- The lab was then **destroyed**; only the audit evidence bucket remains in sandbox state (`force_destroy=false`).
+- Not performed: application image publish/rollout, private runner, synthetic data seeding, SAML federation,
+  live CNI enforcement, and any later attack step (deployment change, data read, egress).
+- Current local checks: Ruff passed; **70 pytest tests passed**; Terraform fmt passed.
 
 The sections below retain the original implementation history; current live facts above supersede
 older statements that no AWS resources have been applied or all working changes were pushed.
@@ -66,7 +68,7 @@ were checked for presence, not independently verified cryptographically.
 - Private visibility and immutable OIDC settings were verified through GitHub's repository API.
 - All application, identity, script, test and Terraform code files are 116 lines or fewer. Transfer invariants and recovery tests are separate modules.
 - Local documentation links resolve; Git attributes preserve Linux line endings, including EC2 user-data shell scripts.
-- Original implementation was committed and pushed. Current D2 additions are uncommitted/unpushed;
+- Original implementation and D2 additions are committed and pushed;
   ignored credentials, local state/plans, login cache and generated evidence remain excluded.
 
 ## Continuation checklist

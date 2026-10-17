@@ -107,3 +107,17 @@ def test_expected_release_raises_no_alert_and_gap_is_not_escalated():
     pr, _ = sample()
     gap = render(classify(pr, None, role_arn=ROLE, repository=REPOSITORY, subject_prefix=PREFIX))
     assert gap["severity"] == "investigate"
+
+
+def test_live_denial_shape_links_role_from_resources_and_subject_from_identity():
+    """Observed 2026-10-17: denied events have null request/response; role is in resources."""
+    event, _ = sample()
+    subject = event["responseElements"]["subjectFromWebIdentityToken"]
+    event.update(errorCode="AccessDenied", requestParameters=None, responseElements=None,
+                 resources=[{"type": "AWS::IAM::OIDCProvider", "ARN": "provider"},
+                            {"type": "AWS::IAM::Role", "ARN": ROLE}],
+                 userIdentity={"type": "WebIdentityUser", "userName": subject})
+    result = classify(event, None, role_arn=ROLE, repository=REPOSITORY, subject_prefix=PREFIX)
+    assert result["decision"] == "assumption_denied"
+    assert (result["github_event"], result["run_id"]) == ("pull_request", 1001)
+    assert render(result) is None
