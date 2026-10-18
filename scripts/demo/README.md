@@ -10,7 +10,7 @@ Operator commands behind [DEMO.md](../../DEMO.md). Run each as `.venv/Scripts/py
 | `watch` | Security's independent watcher: CloudTrail + GitHub run records → live decisions and alerts |
 | `attack` | Opens an unreviewed PR that changes the PR-executed probe; `--again` pushes to the same PR |
 | `impact` | Post-grab proof (sandbox): uses the deployer identity to replace the app and read synthetic customer records, then restores the app |
-| `prevent on\|off` | Removes/restores PR trust on the exercise deploy role only |
+| `prevent on\|off` | Terraform way to toggle PR trust (used for the lab baseline). In the **demo**, apply the fix the AWS-native way instead: `python -m scripts.d2.set_trust block-pr\|allow-pr` |
 | `down` | Stops delivery, removes the runner, closes demo PRs, destroys the lab, verifies nothing billable remains |
 
 Supporting modules: `ops` (AWS session, Terraform, tunnel), `gh` (repository identity, variables, runs), `runner` (main-only runner on the private host), `kube` (bootstrap and admin kubectl), `github_api` (token from env or Git Credential Manager; never printed or stored).

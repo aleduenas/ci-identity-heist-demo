@@ -1,6 +1,6 @@
 # Mybank D2 demo
 
-**What this shows and why it matters.** Mybank ships code through GitHub → CI/CD → a private Kubernetes (EKS) cluster. An attacker who steals a developer's AI-coding-agent GitHub token can't merge code, but they can open a pull request — and the automated tests on that PR run *before* anyone reviews it. This demo shows that those PR tests can grab the AWS identity used to deploy the app, and that from there the attacker replaces the app and reads customer records. Then it shows the two things I built to deal with it: a **detection** that catches the credential grab within about a minute, and a **prevention** (an IAM trust-policy change) that stops it outright. Everything is a fictional bank with invented records in my own AWS sandbox.
+**What this shows and why it matters.** Mybank ships code through GitHub → CI/CD → a private Kubernetes (EKS) cluster. An attacker who steals a developer's AI-coding-agent GitHub token can't merge code, but they can open a pull request — and the automated tests on that PR run *before* anyone reviews it. This demo shows that those PR tests can grab the AWS identity used to deploy the app, and that from there the attacker replaces the app and reads customer records. Then it shows the two things I built to deal with it: a **detection** that catches the credential grab within about a minute, and a **prevention** (an IAM trust-policy change) that stops it outright. Everything is a fictional bank with invented records in my own AWS sandbox. Terraform is used only to *build* the sandbox; the detection and the fix in this demo are applied directly in AWS (CLI / IAM API), matching the GitHub → CI/CD → EKS architecture.
 
 **The identities (so the steps make sense):**
 - **Your GitHub account** — the human. You're the developer in Step 1 and the attacker in Step 2. It only touches GitHub.
@@ -18,9 +18,9 @@
    .venv/Scripts/python.exe -m scripts.demo.login
    ```
 3. Make sure the lab is up (≈20 min if not): `.venv/Scripts/python.exe -m scripts.demo.up`
-4. Make sure prevention is **off** so the attack can succeed first:
+4. Put the exercise role in its vulnerable state (trusts PR jobs) so the attack can succeed first. This edits the role's trust policy directly in AWS IAM — no Terraform:
    ```powershell
-   .venv/Scripts/python.exe -m scripts.demo.prevent off
+   .venv/Scripts/python.exe -m scripts.d2.set_trust allow-pr
    ```
 
 Keep one browser tab on the GitHub repo. Optional: one AWS console tab signed in as `demo-admin`, region **N. Virginia (us-east-1)**.
@@ -109,7 +109,7 @@ Holding the deploy identity, the attacker can't read the database directly — b
 
 ## Step 4 — Build the detection and catch it
 
-So far nothing noticed. The detection I built is a small program that watches AWS's own credential-issuance log (CloudTrail) and GitHub's run records, and alerts when a *PR* job obtains the deploy identity. It runs outside GitHub, so a compromised PR can't disable it.
+So far nothing noticed. The detection I built is a small program that reads AWS's own credential-issuance log — CloudTrail's always-on management-event history, through the AWS API, with no extra infrastructure — correlates it with GitHub's run records, and alerts when a *PR* job obtains the deploy identity. It runs outside GitHub, so a compromised PR can't disable it.
 
 **Steps to follow:**
 1. (Show the work) Open `scripts/d2/detector.py` in the editor — that's the rule that decides *expected release* vs *PR misuse* vs *denied*. `scripts/d2/collect.py` is what reads CloudTrail and GitHub.
@@ -131,24 +131,28 @@ So far nothing noticed. The detection I built is a small program that watches AW
 
 ## Step 5 — Re-run the attack, now blocked (the prevention)
 
-Same attack as Step 2, but first you apply the fix: tighten the deploy role's trust policy so it only trusts `main`, never pull requests. Then the next PR attempt is refused by AWS before any credential is issued.
+Same attack as Step 2, but first you apply the fix directly in AWS: tighten the deploy role's trust policy so it only trusts `main`, never pull requests. Then the next PR attempt is refused by AWS before any credential is issued. (No Terraform — this is the change an operator would make to the role in the real architecture.)
 
-**Steps to follow:**
-1. (Show the work) Open `infra/modules/d2/trust.tf`. Line 5 adds the `pull_request` context only when `allow_pr_demo` is true. Turning the control on sets that false.
-2. In **Terminal A**, apply it (this runs Terraform and changes the real IAM trust policy):
+**Steps to follow (in Terminal A):**
+1. Show the current trust policy — note the `pull_request` line that lets the attack in:
    ```powershell
-   .venv/Scripts/python.exe -m scripts.demo.prevent on
+   .venv/Scripts/python.exe -m scripts.d2.set_trust show
    ```
-   It prints `Apply complete!` and lists the remaining trusted contexts — only `main` push and dispatch. (If you have the AWS console open: IAM → Roles → `mybank-sandbox-d2-demo-deploy` → **Trust relationships** — refresh and the `pull_request` line is gone.) Wait ~30 seconds for IAM to propagate.
+   (That's a wrapper over `aws iam get-role --role-name mybank-sandbox-d2-demo-deploy --query Role.AssumeRolePolicyDocument`.)
+2. Apply the fix — remove PR trust, keeping `main`:
+   ```powershell
+   .venv/Scripts/python.exe -m scripts.d2.set_trust block-pr
+   ```
+   It calls `aws iam update-assume-role-policy` and prints the remaining trusted contexts — only `main` push and dispatch. (If the AWS console is open: IAM → Roles → `mybank-sandbox-d2-demo-deploy` → **Trust relationships** → refresh; the `pull_request` line is gone.) Wait ~30 seconds for IAM to propagate.
 3. Attack again: GitHub → `agent-cleanup` branch → `scripts/d2/demo_probe.py` → **Edit** → `MARKER = "owned-3"` → **Commit directly to the `agent-cleanup` branch**.
 4. On the PR → **Checks** → **identity-probe** now **fails** with `AccessDenied … Not authorized to perform sts:AssumeRoleWithWebIdentity`. **Terminal B** prints `pull_request run <N> -> assumption_denied`.
 5. (Optional) Prove normal deploys still work: GitHub → **Actions → Main release → Run workflow → branch `main` → Run workflow** — it succeeds.
 
 > Say: *"Same attack, now refused by AWS before any credential exists — and normal `main` releases still deploy. Detection tells us when something slips; this trust policy stops it."*
 
-**Technical explanation.** `prevent on` flips `allow_pr_demo` to false and re-applies the Terraform in `infra/modules/d2/`, which removes the `pull_request` subject from the role's `StringLike` trust condition. Now when the PR job calls `AssumeRoleWithWebIdentity`, AWS sees a `pull_request` subject that no longer matches any allowed pattern and denies it — so the job never gets credentials. The `main` patterns are untouched, so the real pipeline is unaffected. This is the same infrastructure-as-code you'd review in a normal PR.
+**Technical explanation.** `set_trust block-pr` reads the role's live trust policy with the IAM API, drops the `pull_request` subject from its `StringLike` condition, and writes it back with `UpdateAssumeRolePolicy`. Now when the PR job calls `AssumeRoleWithWebIdentity`, AWS sees a `pull_request` subject that no longer matches any allowed pattern and denies it — the job never gets credentials. The `main` patterns are untouched, so the real pipeline is unaffected. This is a change you'd make to the role in IAM (console, CLI, or whatever IaC the team uses); the tool just does it in one step and shows the result.
 
-**Reset after the demo:** `.venv/Scripts/python.exe -m scripts.demo.prevent off`, close the `agent-cleanup` PR without merging, and Ctrl+C the monitor in Terminal B.
+**Reset after the demo:** `.venv/Scripts/python.exe -m scripts.d2.set_trust allow-pr`, close the `agent-cleanup` PR without merging, and Ctrl+C the monitor in Terminal B.
 
 ---
 
@@ -167,7 +171,7 @@ Removes the runner, closes demo PRs, destroys the lab, and verifies no EKS clust
 | `Local port 8443 is busy` | `taskkill /F /IM session-manager-plugin.exe`, then re-run the Step 3 terminal block |
 | `kubectl` hangs in Terminal A | The tunnel timed out; re-run the Step 3 block |
 | Monitor silent after an attack | CloudTrail takes a minute or two; wait. Make sure Terminal B was started before the attack |
-| `prevent on` then attack still succeeds | IAM needs ~30s; push the next marker change a moment later |
+| `set_trust block-pr` then attack still succeeds | IAM needs ~30s to propagate; push the next marker change a moment later |
 | PR check didn't start | The change must be to `scripts/d2/demo_probe.py` on a branch in this repo (not a fork) |
 | EKS console can't show workloads | Sign in as `demo-admin`, not root |
 

@@ -8,6 +8,7 @@ Run these modules from the repository root with the development environment inst
 | `python -m scripts.d2.replay --output docs/d2/generated/mock.json` | Retain those fixture decisions locally |
 | `python -m scripts.d2.collect --help` | Inspect live collector arguments |
 | `python -m scripts.d2.report docs/d2/generated/live.json` | Summarize observed decisions and live delays |
+| `python -m scripts.d2.set_trust show\|block-pr\|allow-pr` | The prevention control: read/edit the exercise role's trust policy directly via the IAM API (no Terraform) |
 | `python -m pytest tests/d2` | Check provenance decisions and evidence sanitization |
 
 The hosted workflow executes `demo_probe.py` directly. That probe exchanges its GitHub OIDC token for the exercise role and calls only `GetCallerIdentity`; it never changes EKS or reads application data. Its stdout is an execution aid, not independent detection evidence.
