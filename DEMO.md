@@ -6,7 +6,9 @@
 - **Your GitHub account** — the human. You're the developer in Step 1 and the attacker in Step 2. It only touches GitHub.
 - **`mybank-sandbox-d2-demo-deploy`** — the AWS *deployment* role. A PR's test job can obtain it. In Kubernetes it maps to the group `mybank:deployers`, which can replace the app. This is "the identity" the attack steals.
 - **`mybank-sandbox-app`** — the *app's own* identity; it can read the customer tables. The attacker inherits it by replacing the app.
-- **`demo-admin`** — you, the operator, running the demo. Not part of the attack.
+- **`demo-admin`** — you, the operator/defender, running the demo. Not part of the attack.
+
+**Whose terminal is whose:** the **attacker only ever uses the GitHub website** (opening a PR) — they never have a shell, your repo, or your AWS CLI; their only compute is the GitHub-hosted CI runner they drive through the PR. The **terminal you open is your operator/defender workstation** (the repo checkout, where your cluster-access tooling and the sandbox's address live). You use it to stand the lab up, run the detection, apply the fix — and, in Step 3, to *demonstrate* what the stolen credentials authorize (explained there).
 
 ---
 
@@ -60,11 +62,11 @@ Now you're the attacker. You phished a junior developer's AI-coding-agent GitHub
 
 ## Step 3 — Continued exploitation: use the identity to read customer data
 
-Holding the deploy identity, the attacker can't read the database directly — but they can **replace the running app**, and the app's pods carry an identity that *is* allowed to read customer records. So the attacker swaps the app's container for one that dumps the records. (In real life the CI job would do this; because our cluster is private and GitHub-hosted runners can't reach it, you run these steps from an in-VPC terminal — an attacker gets this position in any org whose pipeline deploys with cluster access.)
+**This step is you (the operator) demonstrating what the stolen credentials authorize — not the attacker on their laptop.** Here's why it has to be: the deploy identity's power is to replace the running app, and the app's pods carry an identity allowed to read customer records. But the cluster API is **private**, and the attacker's GitHub-hosted PR runner **cannot reach it** — so their CI job got the credentials but can't use them from where it runs. That network isolation is a real control. To show the *impact* those credentials carry, you act with that identity from inside the network (an in-VPC position an attacker would have in any org whose CI deploys with cluster access). You're not using anything the attacker has; you're showing what their stolen key opens.
 
 **Steps to follow — from scratch, including opening the terminal:**
 
-1. Open a **second terminal** in VS Code (**Terminal → New Terminal**). Call this **Terminal A**.
+1. Open a **second terminal** in VS Code (**Terminal → New Terminal**) — this is still your operator workstation. Call this **Terminal A**.
 2. Load the repo's AWS session and open a private tunnel to the cluster (paste the whole block):
    ```powershell
    . ./scripts/aws/session.ps1
@@ -181,6 +183,7 @@ Removes the runner, closes demo PRs, destroys the lab, and verifies no EKS clust
 | --- | --- |
 | Did the attacker get customer data? | Yes — Step 3 shows synthetic records coming out. The detection fires at the credential grab, before that stage. |
 | Is the attacker a different GitHub user? | No — same account; what differs is the *action* (unreviewed PR vs. reviewed merge to `main`). The detector keys on the credential's **context** (`pull_request` vs `main` run), not the username. |
+| Isn't Step 3 cheating — you ran it from your own terminal? | The attacker's real action is the credential grab in Step 2, via GitHub. Step 3 is me demonstrating what those credentials authorize, from inside the network — because the private cluster means a PR runner can't reach it (a control). In an org whose CI deploys with cluster access, the attacker's job runs Step 3 itself. |
 | Could they hide with a "release"-looking session name? | No. The monitor uses GitHub's signed subject and run record, never the session name. |
 | Why detect if the trust change prevents it? | Defense in depth, and the detector is what *found* the gap. Configs drift; the alert is the early warning. |
 | Real-world fix? | Trust deploy roles only from protected `main` (shown live); better, GitOps so CI holds no deploy credentials; and scan Terraform for trust policies that admit `pull_request`. |
