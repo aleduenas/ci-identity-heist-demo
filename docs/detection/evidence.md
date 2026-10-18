@@ -1,6 +1,6 @@
-# D2 live evidence — 2026-10-17
+# Detection live evidence — 2026-10-17
 
-Sanitized summary of the live D2 exercise in the owned sandbox (account `404824402451`, `ca-central-1`, private repository `aleduenas/mybank-eks-sandbox`). Raw collector output stays in ignored `docs/d2/generated/`; it holds only allowlisted fields (no JWT, credentials object, access-key ID or session token). All records, repository and identities are synthetic or lab-owned. Nothing here measures the later EKS-change, data-read or exfiltration steps of the concept.
+Sanitized summary of the live detection exercise in the owned sandbox (account `404824402451`, `ca-central-1`, private repository `aleduenas/mybank-eks-sandbox`). Raw collector output stays in ignored `docs/detection/generated/`; it holds only allowlisted fields (no JWT, credentials object, access-key ID or session token). All records, repository and identities are synthetic or lab-owned. Nothing here measures the later EKS-change, data-read or exfiltration steps of the concept.
 
 ## Setup actually observed
 
@@ -9,8 +9,8 @@ Sanitized summary of the live D2 exercise in the owned sandbox (account `4048244
 | Sandbox apply | 65 resources created; EKS 1.35 `ACTIVE`, public endpoint `false`, 2 nodes, 4 add-ons `ACTIVE`, operations host SSM `Online` |
 | GitHub OIDC template | Changed from `use_default=true` to `repo, context, event_name, run_id, run_attempt` (immutable subjects retained) together with `MYBANK_OIDC_RUN_CONTEXT=true` |
 | Emitted subject | Release check [run 39056882803](https://github.com/aleduenas/mybank-eks-sandbox/actions/runs/39056882803) decoded `repo:aleduenas@54992507/mybank-eks-sandbox@1416500552:ref:refs/heads/main:event_name:workflow_dispatch:run_id:39056882803:run_attempt:1` — exactly the template the trust and detector expect |
-| Exercise role | `mybank-sandbox-d2-demo-deploy`; A2 trust allowed main push/dispatch **and** `pull_request`; B2 trust main-only |
-| Mock agent | `mybank-sandbox-d2-mock-agent` assumed by operator: `eks:DescribeCluster` allowed; `UpdateNodegroupConfig`, `CreateAccessEntry`, DynamoDB `ListTables`/`Scan`, and `sts:AssumeRole` into the deploy role all **denied** |
+| Exercise role | `mybank-sandbox-detection-demo-deploy`; A2 trust allowed main push/dispatch **and** `pull_request`; B2 trust main-only |
+| Mock agent | `mybank-sandbox-detection-mock-agent` assumed by operator: `eks:DescribeCluster` allowed; `UpdateNodegroupConfig`, `CreateAccessEntry`, DynamoDB `ListTables`/`Scan`, and `sts:AssumeRole` into the deploy role all **denied** |
 
 ## Comparisons
 

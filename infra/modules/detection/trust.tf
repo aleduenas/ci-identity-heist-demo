@@ -4,12 +4,12 @@ locals {
     { context = "ref:refs/heads/main", event = "workflow_dispatch" },
   ], var.allow_pr_demo ? [{ context = "pull_request", event = "pull_request" }] : [])
   subject_patterns = [for context in local.trusted_contexts : replace(
-    replace(var.d2_sub_pattern, "{context}", context.context), "{event_name}", context.event
+    replace(var.detection_sub_pattern, "{context}", context.context), "{event_name}", context.event
   )]
 }
 
 resource "aws_iam_role" "demo_deploy" {
-  name                 = "${var.name}-d2-demo-deploy"
+  name                 = "${var.name}-detection-demo-deploy"
   max_session_duration = 3600
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -23,5 +23,5 @@ resource "aws_iam_role" "demo_deploy" {
       }
     }]
   })
-  tags = { Exercise = "d2", Identity = "demo-deployer" }
+  tags = { Exercise = "detection", Identity = "demo-deployer" }
 }

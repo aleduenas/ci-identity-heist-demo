@@ -1,10 +1,10 @@
-"""Verify D2 distinguishes authenticated context from attacker-controlled labels and gaps."""
+"""Verify detection distinguishes authenticated context from attacker-controlled labels and gaps."""
 
 import pytest
 
-from scripts.d2.alert import render
-from scripts.d2.detector import classify
-from scripts.d2.sample_data import PREFIX, REPOSITORY, ROLE, sample
+from scripts.detection.alert import render
+from scripts.detection.detector import classify
+from scripts.detection.sample_data import PREFIX, REPOSITORY, ROLE, sample
 
 
 def decision(event, run):

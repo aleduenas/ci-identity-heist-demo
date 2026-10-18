@@ -1,5 +1,5 @@
-variable "enable_d2" {
-  description = "Create isolated D2 exercise identities."
+variable "enable_detection" {
+  description = "Create isolated detection exercise identities."
   type        = bool
   default     = false
 }
@@ -10,8 +10,8 @@ variable "allow_pr_demo" {
   default     = false
 }
 
-variable "d2_sub_pattern" {
-  description = "Reviewed custom GitHub subject template for repo/context/event/run/attempt; verify before enabling D2."
+variable "detection_sub_pattern" {
+  description = "Reviewed custom GitHub subject template for repo/context/event/run/attempt; verify before enabling detection."
   type        = string
   default     = "repo:aleduenas@54992507/mybank-eks-sandbox@1416500552:{context}:event_name:{event_name}:run_id:*:run_attempt:*"
 }

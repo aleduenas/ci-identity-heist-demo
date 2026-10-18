@@ -1,13 +1,13 @@
-name: D2 identity-boundary exercise
+name: detection identity-boundary exercise
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['scripts/d2/**', '.github/workflows/d2-demo.yml']
+    paths: ['scripts/detection/**', '.github/workflows/detection-demo.yml']
   pull_request:
     types: [opened, synchronize, reopened]
-    paths: ['scripts/d2/demo_probe.py']
+    paths: ['scripts/detection/demo_probe.py']
 
 permissions:
   contents: read
@@ -15,7 +15,7 @@ permissions:
 jobs:
   identity-probe:
     if: >-
-      vars.D2_DEMO_ROLE_ARN != '' &&
+      vars.DETECTION_DEMO_ROLE_ARN != '' &&
       (github.ref == 'refs/heads/main' ||
       (github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository))
@@ -25,11 +25,11 @@ jobs:
       contents: read
       id-token: write
     env:
-      D2_DEMO_ROLE_ARN: ${{ vars.D2_DEMO_ROLE_ARN }}
+      DETECTION_DEMO_ROLE_ARN: ${{ vars.DETECTION_DEMO_ROLE_ARN }}
       AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
       AWS_EC2_METADATA_DISABLED: 'true'
       AWS_STS_REGIONAL_ENDPOINTS: regional
-      D2_SESSION_NAME: release-looking-demo
+      DETECTION_SESSION_NAME: release-looking-demo
       EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
       GITHUB_EVENT_NAME: ${{ github.event_name }}
     steps:
@@ -46,4 +46,4 @@ jobs:
           echo "3cfeaf80be482b435b0aa214aff6e0b2c312ee23c0ff20810c75517b6004c6eb  kubectl" | sha256sum -c -
           sudo install -m 0755 kubectl /usr/local/bin/kubectl
       - name: Execute PR-editable probe (grabs the identity; on a PR, demonstrates impact)
-        run: python scripts/d2/demo_probe.py
+        run: python scripts/detection/demo_probe.py

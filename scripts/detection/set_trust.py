@@ -1,10 +1,10 @@
-"""Apply the D2 prevention directly in AWS IAM (no Terraform): toggle whether the exercise
+"""Apply the detection prevention directly in AWS IAM (no Terraform): toggle whether the exercise
 deploy role trusts pull-request jobs. This is the control as an operator would apply it in the
 tabletop architecture — editing the role's trust policy through the IAM API.
 
-  python -m scripts.d2.set_trust show        # print the role's current trust policy
-  python -m scripts.d2.set_trust block-pr    # fix: trust only main (push / workflow_dispatch)
-  python -m scripts.d2.set_trust allow-pr    # revert to the vulnerable PR-trusting state
+  python -m scripts.detection.set_trust show        # print the role's current trust policy
+  python -m scripts.detection.set_trust block-pr    # fix: trust only main (push/dispatch)
+  python -m scripts.detection.set_trust allow-pr    # revert to the vulnerable PR-trusting state
 
 Equivalent raw CLI for `show` is `aws iam get-role --role-name <role>
 --query Role.AssumeRolePolicyDocument`; applying a change is `aws iam
@@ -41,7 +41,7 @@ def main():
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=["show", "block-pr", "allow-pr"])
-    parser.add_argument("--role", default="mybank-sandbox-d2-demo-deploy")
+    parser.add_argument("--role", default="mybank-sandbox-detection-demo-deploy")
     parser.add_argument("--region", default="us-east-1")
     args = parser.parse_args()
     iam = boto3.client("iam", region_name=args.region)

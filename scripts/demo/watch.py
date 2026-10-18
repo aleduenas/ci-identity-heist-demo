@@ -1,4 +1,4 @@
-"""Security's view: independently watch CloudTrail + GitHub and raise the D2 alert live.
+"""Security's view: independently watch CloudTrail + GitHub and raise the detection alert live.
 
 Runs outside the PR's control on the operator workstation. The GitHub credential comes from
 GITHUB_TOKEN/GH_TOKEN or the local Git credential manager, is held in memory only, and is
@@ -22,19 +22,20 @@ def main():
     args = parser.parse_args()
     activate()
     values, repo = outputs(), gh.repository()
-    os.environ["D2_GITHUB_TOKEN"] = get_token()
+    os.environ["DETECTION_GITHUB_TOKEN"] = get_token()
     start = (datetime.now(UTC) - timedelta(minutes=args.lookback)).isoformat()
-    evidence = CACHE.parent / "docs/d2/generated" / f"live-{datetime.now(UTC):%Y%m%dT%H%M%SZ}.json"
-    print(f"Watching role {values['d2_demo_role_arn']} from {start}\n"
+    evidence = (CACHE.parent / "docs/detection/generated"
+                / f"live-{datetime.now(UTC):%Y%m%dT%H%M%SZ}.json")
+    print(f"Watching role {values['detection_demo_role_arn']} from {start}\n"
           f"Evidence file: {evidence.relative_to(CACHE.parent)}\n"
           "CloudTrail usually makes STS events searchable within ~1-5 minutes.\n", flush=True)
     sys.argv = [
-        "collect", "--role-arn", values["d2_demo_role_arn"], "--repository", repo["full"],
+        "collect", "--role-arn", values["detection_demo_role_arn"], "--repository", repo["full"],
         "--subject-prefix", repo["prefix"], "--region", values["aws_region"], "--start", start,
         "--follow-seconds", str(args.minutes * 60), "--poll-seconds", "15",
         "--output", str(evidence),
     ]
-    from scripts.d2.collect import main as collect
+    from scripts.detection.collect import main as collect
 
     try:
         collect()

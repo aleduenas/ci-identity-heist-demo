@@ -19,7 +19,7 @@ identity/generated/
 dist/
 *_credentials*.csv
 .playwright-mcp/
-docs/d2/generated/
+docs/detection/generated/
 # Internal planning / handoff scaffolding (kept locally, not published)
-docs/d2/HANDOFF.md
+docs/detection/HANDOFF.md
 docs/plan/Mybank_AI_Agent_to_EKS_Tabletop_Attack_and_Detection_Plan.md

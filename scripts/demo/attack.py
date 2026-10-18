@@ -15,7 +15,7 @@ from scripts.demo import gh
 from scripts.demo.github_api import request
 from scripts.demo.ops import activate, step
 
-PROBE = "scripts/d2/demo_probe.py"
+PROBE = "scripts/detection/demo_probe.py"
 PREFIX = "demo-attack-"
 
 
@@ -47,7 +47,7 @@ def push_change(branch: str, base: str, stamp: str):
 
 def report(repo: dict, since: str):
     step("Waiting for the PR's automated checks (GitHub-hosted runner)")
-    run = gh.wait_for_run(repo, "d2-demo.yml", since, event="pull_request", timeout=600)
+    run = gh.wait_for_run(repo, "detection-demo.yml", since, event="pull_request", timeout=600)
     job = run["job_ids"].get("identity-probe")
     print(f"    identity-probe: {run['jobs'].get('identity-probe')}")
     log = gh.job_log(repo, job) if job else ""
@@ -79,7 +79,7 @@ def main():
         push_change(branch, "main", stamp)
         pr = request("POST", f"{repo['path']}/pulls", {
             "title": "Tidy probe output", "head": branch, "base": "main",
-            "body": "Simulated stolen coding-agent change for the D2 demo. Do not merge.",
+            "body": "Simulated stolen coding-agent change for the detection demo. Do not merge.",
         })
         print(f"    {pr['html_url']} (open, unreviewed)")
     report(repo, since)

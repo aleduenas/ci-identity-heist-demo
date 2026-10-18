@@ -1,1 +1,1 @@
-"""One-command operator workflow for the D2 demo: up, app, watch, attack, prevent, down."""
+"""One-command operator workflow for the detection demo: up, app, watch, attack, prevent, down."""

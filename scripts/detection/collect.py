@@ -71,7 +71,7 @@ def arguments():
     parser.add_argument("--region", default="us-east-1")
     parser.add_argument("--start", required=True, help="UTC ISO timestamp with timezone")
     parser.add_argument("--end", help="Fixed UTC ISO end; omitted means current poll time")
-    parser.add_argument("--token-env", default="D2_GITHUB_TOKEN")
+    parser.add_argument("--token-env", default="DETECTION_GITHUB_TOKEN")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--follow-seconds", type=int, default=0)
     parser.add_argument("--poll-seconds", type=int, default=15)

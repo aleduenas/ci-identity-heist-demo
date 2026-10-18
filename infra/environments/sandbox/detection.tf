@@ -1,6 +1,6 @@
-module "d2" {
-  count          = var.enable_d2 ? 1 : 0
-  source         = "../../modules/d2"
+module "detection" {
+  count          = var.enable_detection ? 1 : 0
+  source         = "../../modules/detection"
   name           = var.name
   aws_account_id = var.aws_account_id
   cluster_name   = module.eks.cluster_name
@@ -9,7 +9,7 @@ module "d2" {
     var.existing_github_oidc_provider_arn,
     "arn:aws:iam::${var.aws_account_id}:oidc-provider/token.actions.githubusercontent.com"
   )
-  d2_sub_pattern              = var.d2_sub_pattern
+  detection_sub_pattern       = var.detection_sub_pattern
   allow_pr_demo               = var.allow_pr_demo
   mock_operator_principal_arn = var.mock_operator_principal_arn
   depends_on                  = [module.delivery]

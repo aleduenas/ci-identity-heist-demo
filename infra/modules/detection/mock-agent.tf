@@ -1,6 +1,6 @@
 resource "aws_iam_role" "mock_agent" {
   count                = var.mock_operator_principal_arn == null ? 0 : 1
-  name                 = "${var.name}-d2-mock-agent"
+  name                 = "${var.name}-detection-mock-agent"
   max_session_duration = 3600
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -10,7 +10,7 @@ resource "aws_iam_role" "mock_agent" {
       Principal = { AWS = var.mock_operator_principal_arn }
     }]
   })
-  tags = { Exercise = "d2", Identity = "mock-agent" }
+  tags = { Exercise = "detection", Identity = "mock-agent" }
 }
 
 resource "aws_iam_role_policy" "mock_agent" {

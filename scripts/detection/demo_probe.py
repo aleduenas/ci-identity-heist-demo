@@ -1,4 +1,4 @@
-"""PR-editable test entrypoint for the D2 exercise.
+"""PR-editable test entrypoint for the detection exercise.
 
 This file stands in for attacker-controlled code that runs in CI. In the real scenario an
 attacker who stole a developer's AI-coding-agent GitHub token edits a build/test script in a
@@ -6,7 +6,7 @@ pull request; the PR's automated tests execute it *before* anyone reviews the ch
 
 What it does:
   - Always: obtain the AWS "deployment" identity by exchanging the job's GitHub OIDC token
-    (this is the credential grab the D2 detector watches for).
+    (this is the credential grab the detection detector watches for).
   - On a pull request only: use that identity to carry out the rest of the attack in CI —
     replace the running app with a container that dumps the customer tables, print what it
     stole, then restore the app.
@@ -63,15 +63,16 @@ def web_identity_token() -> str:
 def obtain_identity(region: str) -> dict:
     """Exchange the GitHub OIDC token for the deployment role's temporary AWS credentials.
 
-    This is the heart of D2: an unreviewed PR job calling sts:AssumeRoleWithWebIdentity and AWS
-    accepting it because the role's trust policy allows the pull_request context. Once the trust
+    This is the heart of detection: an unreviewed PR job calling
+    sts:AssumeRoleWithWebIdentity and AWS accepting it because the role's trust policy allows
+    the pull_request context. Once the trust
     is fixed (prevention), this call fails with AccessDenied and the attack stops right here.
     """
     sts = boto3.client("sts", region_name=region, config=Config(signature_version=UNSIGNED))
     return sts.assume_role_with_web_identity(
-        RoleArn=os.environ["D2_DEMO_ROLE_ARN"],
+        RoleArn=os.environ["DETECTION_DEMO_ROLE_ARN"],
         # A deliberately release-looking session name, to show the detector ignores it.
-        RoleSessionName=os.environ.get("D2_SESSION_NAME", "release-looking-demo"),
+        RoleSessionName=os.environ.get("DETECTION_SESSION_NAME", "release-looking-demo"),
         WebIdentityToken=web_identity_token(), DurationSeconds=900,
     )["Credentials"]
 

@@ -14,7 +14,8 @@ def get_run(repository: str, run_id: int, attempt: int, token: str) -> dict:
     url = f"https://api.github.com/repos/{repository}/actions/runs/{run_id}/attempts/{attempt}"
     request = urllib.request.Request(url, headers={
         "Accept": "application/vnd.github+json", "Authorization": f"Bearer {token}",
-        "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "mybank-d2-independent-collector",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "mybank-detection-independent-collector",
     })
     try:
         with urllib.request.urlopen(request, timeout=20) as response:

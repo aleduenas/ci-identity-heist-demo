@@ -2,17 +2,17 @@
 
 Updated: 2026-10-17.
 
-## Active D2 continuation
+## Active detection continuation
 
-Use [D2 evidence](d2/evidence.md) for results.
+Use [detection evidence](detection/evidence.md) for results.
 
 - Verified temporary CLI/SDK access as sandbox user `codex-builder` in account `404824402451`.
 - Bootstrap state storage, narrow bootstrap role and a plain USD20 budget email alert are live (alert only).
-- D2 code, OIDC run-context migration and docs are committed and pushed to `main`; hosted CI is green.
+- detection code, OIDC run-context migration and docs are committed and pushed to `main`; hosted CI is green.
 - 2026-10-17: the full private sandbox was **applied** (65 resources, EKS 1.35 private endpoint only, healthy
   nodes, add-ons and SSM). The GitHub OIDC template and `MYBANK_OIDC_RUN_CONTEXT` were switched together, and the
   emitted subject was verified live.
-- Live D2 results: N2 `expected_release`; A2 unreviewed PR `pr_role_misuse` with an observed TTD of 31.1 s; B2
+- Live detection results: N2 `expected_release`; A2 unreviewed PR `pr_role_misuse` with an observed TTD of 31.1 s; B2
   PR denied while main succeeds; live missing-context gives `context_not_verified`. The mock-agent role was verified inspect-only.
 - The lab was then **destroyed**; only the audit evidence bucket remains in sandbox state (`force_destroy=false`).
 - Not performed: application image publish/rollout, private runner, synthetic data seeding, SAML federation,
@@ -60,7 +60,7 @@ older statements that no AWS resources have been applied or all working changes 
 At the original 2026-10-13 handoff, no AWS plan/apply, STS federation, live IAM/CNI enforcement,
 CloudTrail delivery or EKS rollout had been performed. The 2026-10-17 bootstrap apply and
 local-development CLI login are recorded above; they do not establish application deployment,
-employee SAML federation, live workload enforcement or D2 detection. Original local SAML signatures
+employee SAML federation, live workload enforcement or detection. Original local SAML signatures
 were checked for presence, not independently verified cryptographically.
 
 ## Repository layout verification
@@ -68,7 +68,7 @@ were checked for presence, not independently verified cryptographically.
 - Private visibility and immutable OIDC settings were verified through GitHub's repository API.
 - All application, identity, script, test and Terraform code files are 116 lines or fewer. Transfer invariants and recovery tests are separate modules.
 - Local documentation links resolve; Git attributes preserve Linux line endings, including EC2 user-data shell scripts.
-- Original implementation and D2 additions are committed and pushed;
+- Original implementation and detection additions are committed and pushed;
   ignored credentials, local state/plans, login cache and generated evidence remain excluded.
 
 ## Continuation checklist

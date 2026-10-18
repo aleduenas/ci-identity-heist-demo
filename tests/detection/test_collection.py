@@ -7,10 +7,10 @@ from unittest.mock import patch
 
 import pytest
 
-from scripts.d2.collect import lookup, timestamp
-from scripts.d2.evidence import safe_event, safe_run
-from scripts.d2.github import get_run
-from scripts.d2.sample_data import REPOSITORY, sample
+from scripts.detection.collect import lookup, timestamp
+from scripts.detection.evidence import safe_event, safe_run
+from scripts.detection.github import get_run
+from scripts.detection.sample_data import REPOSITORY, sample
 
 
 def test_allowlist_drops_every_nested_credential_and_raw_token():
@@ -62,7 +62,7 @@ def test_cloudtrail_pages_are_sanitized_before_leaving_lookup():
 
     client = Client()
     now = timestamp("2026-10-17T12:00:00Z")
-    with patch("scripts.d2.collect.time.sleep"):
+    with patch("scripts.detection.collect.time.sleep"):
         evidence = list(lookup(client, now, now))
     assert client.calls[1]["NextToken"] == "page2"
     assert "synthetic-secret" not in json.dumps(evidence)

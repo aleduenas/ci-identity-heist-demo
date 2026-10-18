@@ -11,4 +11,4 @@ terraform -chdir=infra/environments/sandbox apply sandbox.tfplan
 terraform -chdir=infra/environments/sandbox output -json
 ```
 
-Apply is intentionally manual. Output keys match delivery and identity scripts. `identity_configuration` exposes prospective role/provider ARNs before federation is enabled; individual human role outputs are null until the second apply. The disabled-by-default `d2*.tf` files add the isolated [D2 exercise](../../modules/d2/README.md) identities. See [infrastructure operations](../../../docs/infrastructure.md) and [delivery](../../../docs/delivery.md) for cluster bootstrap, runner setup and teardown.
+Apply is intentionally manual. Output keys match delivery and identity scripts. `identity_configuration` exposes prospective role/provider ARNs before federation is enabled; individual human role outputs are null until the second apply. The disabled-by-default `detection*.tf` files add the isolated [detection exercise](../../modules/detection/README.md) identities. See [infrastructure operations](../../../docs/infrastructure.md) and [delivery](../../../docs/delivery.md) for cluster bootstrap, runner setup and teardown.

@@ -1,4 +1,4 @@
-"""Render the human-readable D2 alert: what happened, why it matters, where to look."""
+"""Render the human-readable detection alert: what happened, why it matters, where to look."""
 
 
 def render(result: dict) -> dict | None:

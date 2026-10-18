@@ -1,10 +1,10 @@
-# Mybank D2 demo
+# Mybank detection demo
 
 **What this shows and why it matters.** Mybank ships code through GitHub → CI/CD → a Kubernetes (EKS) cluster. An attacker who steals a developer's AI-coding-agent GitHub token can't merge code, but can open a pull request — and the automated tests on that PR run *before* anyone reviews them. This demo shows, entirely from GitHub, that those PR tests grab the AWS identity used to deploy the app and use it to **read customer records**. Then it shows the two things I built: a **detection** that catches the credential grab within about a minute, and a **prevention** (an IAM trust-policy change) that stops it. Everything is a fictional bank with invented records in my own AWS sandbox. Terraform is used only to *build* the sandbox; the attack, the detection, and the fix are all GitHub + the AWS API, matching the given architecture.
 
 **The identities (so the steps make sense):**
 - **Your GitHub account** — the human. The developer in Step 1, the attacker in Step 2. Only touches GitHub.
-- **`mybank-sandbox-d2-demo-deploy`** — the AWS *deployment* role. A PR's CI job can obtain it via GitHub OIDC. In Kubernetes it maps to the group `mybank:deployers`, which can replace the app. This is "the identity" the attack steals.
+- **`mybank-sandbox-detection-demo-deploy`** — the AWS *deployment* role. A PR's CI job can obtain it via GitHub OIDC. In Kubernetes it maps to the group `mybank:deployers`, which can replace the app. This is "the identity" the attack steals.
 - **`mybank-sandbox-app`** — the *app's own* identity; it can read the customer tables. The attacker inherits it by replacing the app.
 - **`demo-admin`** — you, the operator/defender. Used only to run the detection and apply the fix — never in the attack.
 
@@ -44,7 +44,7 @@ From the repository root in PowerShell:
 3. Put the exercise role in its vulnerable state (trusts PR jobs) so the first attack succeeds — this edits the role's trust policy **directly in AWS IAM**, no Terraform:
    ```powershell
    . ./scripts/aws/session.ps1
-   .venv/Scripts/python.exe -m scripts.d2.set_trust allow-pr
+   .venv/Scripts/python.exe -m scripts.detection.set_trust allow-pr
    ```
 
 Keep one browser tab on the GitHub repo. Optional: an AWS console tab as `demo-admin`, region **N. Virginia (us-east-1)**, for CloudTrail / IAM.
@@ -73,11 +73,11 @@ Engineers change code here all day: edit a file, open a PR, it's reviewed, merge
 You're the attacker. You phished a junior developer's AI-coding-agent GitHub token. You can't approve or merge — but you can open a PR, and this repo runs tests on PRs before review. You put your own code into a test script so it runs in CI, and that code grabs the deploy identity and uses it.
 
 **Steps to follow:**
-1. GitHub → **Code** → `scripts/d2/demo_probe.py` → **pencil (Edit)**.
+1. GitHub → **Code** → `scripts/detection/demo_probe.py` → **pencil (Edit)**.
 2. Change `MARKER = "original-harmless-probe"` to `MARKER = "owned-1"`.
 3. **Commit changes…** → **Create a new branch** (`agent-cleanup`) → **Propose changes** → title `Tidy probe output` → **Create pull request**. **Do not merge.**
-4. On the PR → **Checks** → open **D2 identity-boundary exercise → identity-probe** → expand the run step. Read the log aloud:
-   - `obtained_identity: …mybank-sandbox-d2-demo-deploy…` — the unreviewed PR got the deploy identity.
+4. On the PR → **Checks** → open **detection identity-boundary exercise → identity-probe** → expand the run step. Read the log aloud:
+   - `obtained_identity: …mybank-sandbox-detection-demo-deploy…` — the unreviewed PR got the deploy identity.
    - `Replaced mybank-api with a reader of the customer tables…`
    - `STOLEN CUSTOMER RECORDS:` followed by `acct-alice`, `acct-bob`, and the two customers (names, emails, balances).
    - `Restored the legitimate app.`
@@ -91,13 +91,13 @@ You're the attacker. You phished a junior developer's AI-coding-agent GitHub tok
 Nothing above noticed. The detection I built reads AWS's own credential-issuance log — CloudTrail's always-on event history, via the AWS API — correlates it with GitHub's run records, and alerts when a *PR* job obtains the deploy identity. It runs outside GitHub, so a compromised PR can't disable it.
 
 **Steps to follow:**
-1. (Show the work) Open `scripts/d2/detector.py` (the rule) and `scripts/d2/collect.py` (reads CloudTrail + GitHub).
+1. (Show the work) Open `scripts/detection/detector.py` (the rule) and `scripts/detection/collect.py` (reads CloudTrail + GitHub).
 2. In your defender terminal, start the monitor (loads your read-only GitHub token and runs the detector against the live logs):
    ```powershell
    . ./scripts/aws/session.ps1
    .venv/Scripts/python.exe -m scripts.demo.watch --minutes 60 --lookback 1
    ```
-3. Attack again: GitHub → `agent-cleanup` branch → `scripts/d2/demo_probe.py` → **Edit** → `MARKER = "owned-2"` → **Commit directly to the `agent-cleanup` branch**.
+3. Attack again: GitHub → `agent-cleanup` branch → `scripts/detection/demo_probe.py` → **Edit** → `MARKER = "owned-2"` → **Commit directly to the `agent-cleanup` branch**.
 4. Within ~1 minute the monitor prints:
    ```
    pull_request run <N> -> pr_role_misuse
@@ -113,15 +113,15 @@ Now the fix, applied directly in AWS: tighten the deploy role's trust policy so 
 **Steps to follow (defender terminal):**
 1. Show the current trust — note the `pull_request` line:
    ```powershell
-   .venv/Scripts/python.exe -m scripts.d2.set_trust show
+   .venv/Scripts/python.exe -m scripts.detection.set_trust show
    ```
    (Wraps `aws iam get-role … --query Role.AssumeRolePolicyDocument`.)
 2. Apply the fix — remove PR trust, keep `main`:
    ```powershell
-   .venv/Scripts/python.exe -m scripts.d2.set_trust block-pr
+   .venv/Scripts/python.exe -m scripts.detection.set_trust block-pr
    ```
-   It calls `aws iam update-assume-role-policy` and prints the remaining `main`-only contexts. (AWS console: IAM → Roles → `mybank-sandbox-d2-demo-deploy` → **Trust relationships** → refresh; the `pull_request` line is gone.) Wait ~30 seconds for IAM to propagate.
-3. Attack again: GitHub → `agent-cleanup` branch → `scripts/d2/demo_probe.py` → **Edit** → `MARKER = "owned-3"` → **Commit directly to the `agent-cleanup` branch**.
+   It calls `aws iam update-assume-role-policy` and prints the remaining `main`-only contexts. (AWS console: IAM → Roles → `mybank-sandbox-detection-demo-deploy` → **Trust relationships** → refresh; the `pull_request` line is gone.) Wait ~30 seconds for IAM to propagate.
+3. Attack again: GitHub → `agent-cleanup` branch → `scripts/detection/demo_probe.py` → **Edit** → `MARKER = "owned-3"` → **Commit directly to the `agent-cleanup` branch**.
 4. On the PR → **Checks** → **identity-probe** now **fails**: `AccessDenied … Not authorized to perform sts:AssumeRoleWithWebIdentity`. The monitor prints `pull_request run <N> -> assumption_denied`. No app change, no data.
 5. (Optional) Prove normal deploys still work: GitHub → **Actions → Main release → Run workflow → `main`** — it succeeds.
 
@@ -129,7 +129,7 @@ Now the fix, applied directly in AWS: tighten the deploy role's trust policy so 
 
 **Technical explanation.** `set_trust block-pr` reads the role's live trust policy with the IAM API, drops the `pull_request` subject from its `StringLike` condition, and writes it back with `UpdateAssumeRolePolicy`. The PR job's `pull_request` subject no longer matches any allowed pattern, so `AssumeRoleWithWebIdentity` is denied — the job never gets credentials, so it can't reach the cluster or the data. The `main` patterns are untouched, so releases are unaffected.
 
-**Reset after the demo:** `.venv/Scripts/python.exe -m scripts.d2.set_trust allow-pr`, close the `agent-cleanup` PR without merging, and Ctrl+C the monitor.
+**Reset after the demo:** `.venv/Scripts/python.exe -m scripts.detection.set_trust allow-pr`, close the `agent-cleanup` PR without merging, and Ctrl+C the monitor.
 
 ---
 
@@ -148,7 +148,7 @@ Removes the runner, closes demo PRs, destroys the lab, and verifies no EKS clust
 | `set_trust` says `Unable to locate credentials` | Dot-source `. ./scripts/aws/session.ps1` first (it needs your AWS session) |
 | Monitor silent after an attack | CloudTrail takes a minute or two; wait. Make sure it was started before the attack |
 | `set_trust block-pr` then attack still succeeds | IAM needs ~30s to propagate; push the next marker change a moment later |
-| PR check didn't start | The change must be to `scripts/d2/demo_probe.py` on a branch in this repo (not a fork) |
+| PR check didn't start | The change must be to `scripts/detection/demo_probe.py` on a branch in this repo (not a fork) |
 | EKS console can't show workloads | Sign in as `demo-admin`, not root |
 
 ## Likely questions
@@ -161,4 +161,4 @@ Removes the runner, closes demo PRs, destroys the lab, and verifies no EKS clust
 | Could they hide with a "release"-looking session name? | No. The monitor uses GitHub's signed subject and run record, never the session name. |
 | Real-world fix? | Trust deploy roles only from protected `main` (shown live); better, GitOps so CI holds no deploy credentials; and scan IAM/Terraform for trust policies that admit `pull_request`. |
 
-Recorded results: [docs/d2/evidence.md](docs/d2/evidence.md). Detection + control code: [scripts/d2](scripts/d2/README.md). Infrastructure: [infra](infra/README.md).
+Recorded results: [docs/detection/evidence.md](docs/detection/evidence.md). Detection + control code: [scripts/detection](scripts/detection/README.md). Infrastructure: [infra](infra/README.md).

@@ -211,12 +211,12 @@ Why here specifically:
 - **Signal source:** CloudTrail `AssumeRoleWithWebIdentity` management events for the one deploy role,
   read via the regional `LookupEvents` API — no new trail required (always-on Event History is enough).
   The collector pages results, respects the 2-req/s quota, filters to the exact role, and dedupes by
-  event ID. ([`scripts/d2/collect.py`](../../scripts/d2/collect.py))
+  event ID. ([`scripts/detection/collect.py`](../../scripts/detection/collect.py))
 - **Independent correlation:** for each successful event it reads
   `responseElements.subjectFromWebIdentityToken`, verifies the expected GitHub OIDC provider/audience
   and the issued-role ARN, parses the signed subject for `run_id`/`run_attempt`/`event_name`, then calls
   `GET /repos/{owner}/{repo}/actions/runs/{id}/attempts/{n}` and checks the **immutable owner and repo
-  IDs**, exact run/attempt, and event type match. ([`scripts/d2/detector.py`](../../scripts/d2/detector.py))
+  IDs**, exact run/attempt, and event type match. ([`scripts/detection/detector.py`](../../scripts/detection/detector.py))
 - **Decisions:** `pr_role_misuse` (PR context, verified) → **alert**; `expected_release` (main context +
   the expected workflow + branch `main`) → no alert; `assumption_denied` (AWS refused — the prevention
   fired — linked to its run via the rejected subject in `userIdentity.userName`); `context_not_verified`
@@ -224,7 +224,7 @@ Why here specifically:
 - **Out-of-band authority:** the collector, its GitHub read token, and the authoritative detector code
   live **outside** the PR-editable branch and run in a separate trusted process, so a compromised PR
   can't disable or spoof the detector.
-- **Paired prevention:** `scripts/d2/set_trust block-pr` reads the role's live trust policy, drops the
+- **Paired prevention:** `scripts/detection/set_trust block-pr` reads the role's live trust policy, drops the
   `pull_request` subject from the `StringLike` condition, and writes it back with
   `UpdateAssumeRolePolicy`. The PR subject then matches no allowed pattern, so AWS denies the grant
   *before any credential exists*; the `main` patterns are untouched, so releases still work.
@@ -299,7 +299,7 @@ monitor started before the actions so its polling bounds the timing:
 We record **event time, first-searchable-log time, and first-alert time separately in UTC**, and report
 **TTD = alert time − AWS event time** and **ingestion delay = first-searchable − event time**. Evidence
 is sanitized (no JWT, no credentials object, no access-key ID or session token). See
-[`docs/d2/evidence.md`](../../docs/d2/evidence.md).
+[`docs/detection/evidence.md`](../../docs/detection/evidence.md).
 
 A "pass" requires an actual retrievable alert with enough context to investigate — a raw log line is not
 a pass — and the legitimate run must *not* escalate.

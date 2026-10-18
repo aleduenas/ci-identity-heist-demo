@@ -1,4 +1,4 @@
-# Isolated D2 exercise identities
+# Isolated detection exercise identities
 
 This module adds an opt-in demo deployment role to the existing synthetic lab.
 It does not change the normal GitHub build/deploy roles, expose EKS publicly,
@@ -7,7 +7,7 @@ Local configuration is not evidence of AWS role acceptance or deployment.
 
 ## Activation
 
-The composition root sets `enable_d2 = false` by default. When enabled, the
+The composition root sets `enable_detection = false` by default. When enabled, the
 demo role remains main-only unless `allow_pr_demo = true` is explicitly set for
 the bounded A2 exercise. Set it back to false for B2 and review/apply the change.
 Do not broaden the existing release-role trusts to accommodate this exercise.
@@ -22,7 +22,7 @@ For this repository the proposed template is:
 repo:aleduenas@54992507/mybank-eks-sandbox@1416500552:{context}:event_name:{event_name}:run_id:*:run_attempt:*
 ```
 
-Supply it as `d2_sub_pattern` only after checking the actual emitted format.
+Supply it as `detection_sub_pattern` only after checking the actual emitted format.
 The template makes the repository exact, with wildcards only in signed run
 identifiers. The module substitutes these allowed context/event combinations:
 
@@ -56,12 +56,12 @@ GitHub actor or push PRs: operator-made PR changes must be labeled simulations.
 
 ## Outputs and evidence
 
-The sandbox exports `d2_demo_role_arn` for repository variable
-`D2_DEMO_ROLE_ARN`, `mock_agent_role_arn`, and `d2_subject_patterns`.
+The sandbox exports `detection_demo_role_arn` for repository variable
+`DETECTION_DEMO_ROLE_ARN`, `mock_agent_role_arn`, and `detection_subject_patterns`.
 Use the same demo role for N2 main and A2 PR runs. Use independently obtained
 GitHub run/attempt evidence; caller-selected role-session names are not proof.
 Never print or retain JWTs or temporary credentials as evidence.
 
 This module contains no detector, alert destination, GitHub workflow, budget,
 or application workload deployment. It implements only the IAM trust boundary
-described by the D2 hypothesis.
+described by the detection hypothesis.

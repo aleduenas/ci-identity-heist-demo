@@ -24,7 +24,7 @@ def main():
     result = terraform("apply", "-input=false", "-no-color", plan, capture=True)
     print("    " + next((line for line in result.splitlines() if line.startswith("Apply complete")),
                          "applied"), flush=True)
-    patterns = save_outputs()["d2_subject_patterns"]
+    patterns = save_outputs()["detection_subject_patterns"]
     for pattern in patterns:
         print(f"    trusts {pattern.split(':', 2)[2]}")
     ok("IAM changes can take ~10-30 s to apply everywhere before re-running the attack")

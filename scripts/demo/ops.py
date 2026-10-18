@@ -52,7 +52,7 @@ def tf_vars(repo: dict, **overrides) -> list[str]:
     """Bind trust to the actual git remote's immutable IDs, so a fresh repository just works."""
     pattern = f"{repo['prefix']}:{{context}}:event_name:{{event_name}}:run_id:*:run_attempt:*"
     values = {"github_owner": repo["owner"], "github_repository": repo["name"],
-              "github_oidc_subject_prefix": repo["prefix"], "d2_sub_pattern": pattern,
+              "github_oidc_subject_prefix": repo["prefix"], "detection_sub_pattern": pattern,
               **overrides}
     return [f"-var-file={TFVARS}"] + [f"-var={key}={value}" for key, value in values.items()]
 

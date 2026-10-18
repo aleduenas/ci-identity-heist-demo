@@ -1,11 +1,11 @@
-"""Pure D2 decisions over independently collected, allowlisted evidence."""
+"""Pure detection decisions over independently collected, allowlisted evidence."""
 
 from .evidence import role_arn as event_role_arn
 from .subject import parse_subject
 
 
 def classify(event: dict, run: dict | None, *, role_arn: str, repository: str,
-             subject_prefix: str, workflow: str = ".github/workflows/d2-demo.yml") -> dict:
+             subject_prefix: str, workflow: str = ".github/workflows/detection-demo.yml") -> dict:
     """Return a visible decision; unverifiable context never becomes a trusted release."""
     def result(decision, reason, **details):
         return {"decision": decision, "reason": reason, "event_id": event.get("eventID"),

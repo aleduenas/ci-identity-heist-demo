@@ -28,7 +28,7 @@ variable "addon_versions" {
   default     = {}
 }
 variable "endpoint_public_access" {
-  description = "Expose the EKS API publicly (still IAM/RBAC-authenticated). The D2 exercise sets this so a CI runner can reach the cluster, as in pipelines that deploy over a public endpoint."
+  description = "Expose the EKS API publicly (still IAM/RBAC-authenticated). The detection exercise sets this so a CI runner can reach the cluster, as in pipelines that deploy over a public endpoint."
   type        = bool
   default     = false
 }

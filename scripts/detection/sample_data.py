@@ -1,6 +1,6 @@
 """Explicitly invented records for repeatable local rule demonstrations, never live evidence."""
 
-ROLE = "arn:aws:iam::111122223333:role/mybank-d2-demo-deploy"
+ROLE = "arn:aws:iam::111122223333:role/mybank-detection-demo-deploy"
 REPOSITORY = "example-owner/example-sandbox"
 PREFIX = "repo:example-owner@123/example-sandbox@456"
 
@@ -19,13 +19,13 @@ def sample(event_name: str = "pull_request", run_id: int = 1001) -> tuple[dict, 
                          "token.actions.githubusercontent.com"),
             "assumedRoleUser": {
                 "arn": "arn:aws:sts::111122223333:assumed-role/"
-                       "mybank-d2-demo-deploy/release-looking-demo",
+                       "mybank-detection-demo-deploy/release-looking-demo",
             },
         },
     }
     github = {
         "id": run_id, "run_attempt": 1, "event": event_name,
-        "path": ".github/workflows/d2-demo.yml", "workflow_id": 42,
+        "path": ".github/workflows/detection-demo.yml", "workflow_id": 42,
         "head_branch": "exercise-pr" if event_name == "pull_request" else "main",
         "head_sha": "a" * 40, "repository": {
             "id": 456, "full_name": REPOSITORY, "owner": {"id": 123},

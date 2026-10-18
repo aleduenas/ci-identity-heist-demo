@@ -95,7 +95,7 @@ variable "lab_teardown_force" {
   default     = false
 }
 variable "cluster_public_access" {
-  description = "Expose the EKS API publicly for the D2 exercise so a CI runner can reach it (IAM/RBAC still enforced)."
+  description = "Expose the EKS API publicly for the detection exercise so a CI runner can reach it (IAM/RBAC still enforced)."
   type        = bool
   default     = false
 }

@@ -1,6 +1,6 @@
 # Mybank EKS Sandbox
 
-**Running the D2 demo? Start with [DEMO.md](DEMO.md).**
+**Running the detection demo? Start with [DEMO.md](DEMO.md).**
 
 A private, modular AWS lab that models a fictional bank's delivery and employee-access workflow: GitHub → CI/CD → EKS, SAML employee federation, and limited elevated customer-data access. All records and money movements are synthetic.
 

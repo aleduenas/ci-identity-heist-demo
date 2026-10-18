@@ -14,7 +14,7 @@ from scripts.demo.ops import activate, ok, step, terraform, tf_vars
 def github_cleanup(repo: dict):
     step("GitHub: stop deployments, remove runner, close demo PRs")
     gh.set_var(repo, "DEPLOY_ENABLED", "false")
-    gh.delete_var(repo, "D2_DEMO_ROLE_ARN")
+    gh.delete_var(repo, "DETECTION_DEMO_ROLE_ARN")
     runner.remove(repo)
     for pr in request("GET", f"{repo['path']}/pulls?state=open&per_page=50"):
         if pr["head"]["ref"].startswith(PREFIX):

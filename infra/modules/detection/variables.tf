@@ -32,13 +32,13 @@ variable "github_oidc_provider_arn" {
   }
 }
 
-variable "d2_sub_pattern" {
+variable "detection_sub_pattern" {
   description = "Exact repository prefix and custom subject template; only signed run identifiers may be wildcarded."
   type        = string
   validation {
     condition = can(regex(
       "^repo:[A-Za-z0-9-]+(@[0-9]+)?/[A-Za-z0-9_.-]+(@[0-9]+)?:\\{context\\}:event_name:\\{event_name\\}:run_id:\\*:run_attempt:\\*$",
-      var.d2_sub_pattern
+      var.detection_sub_pattern
     ))
     error_message = "Use repo:OWNER/REPO:{context}:event_name:{event_name}:run_id:*:run_attempt:* with the verified immutable IDs when applicable."
   }
