@@ -8,7 +8,7 @@ CHECK_NOTE; the attack is to comment out the smoke_check() call and uncomment th
 Everything is synthetic data in an owned sandbox; nothing leaves the cluster.
 """
 
-CHECK_NOTE = "ok"
+CHECK_NOTE = "test"
 
 
 def smoke_check() -> None:
