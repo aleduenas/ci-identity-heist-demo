@@ -7,11 +7,11 @@ EKS Pod Identity role can read the customer tables. So replacing the app's conta
 a reader turns deploy access into data access. It restores the app afterward and never sends data
 anywhere outside the cluster.
 
-Run detection OFF (`scripts.demo.prevent off`) so this mirrors a successful attack. The network
-caveat is real and worth stating to a panel: a GitHub-hosted PR runner cannot reach the private
-cluster, so these steps run from an in-VPC position, representing an attacker whose pipeline
-deploys with cluster access (a common real pattern). The credential grab itself is what the
-detector catches first; this shows why catching it matters.
+Legacy supporting helper for a private-endpoint environment, not a current demo step.
+The current attack runs in GitHub via demo_probe.py against the demo's explicitly enabled
+public EKS control-plane endpoint. Prepare enforcement_enabled=false through the GitHub
+security control before a successful-attack rehearsal; see security/README.md. The old local
+Terraform prevention toggle is retired. Nothing in this helper activates the control.
 """
 
 import json

@@ -6,13 +6,20 @@ The PR workflow runs only on GitHub-hosted Ubuntu workers. Main releases run the
 
 | Component | Location | Owner |
 | --- | --- | --- |
-| Shared tests, image build, Terraform and schema checks | `.github/workflows/checks.yml` | GitHub-hosted workers |
+| Shared tests, image build and schema checks | `.github/workflows/checks.yml` | GitHub-hosted workers |
+| Infrastructure formatting/validation, filtered to infrastructure edits | `.github/workflows/infrastructure.yml` | GitHub-hosted workers |
+| Versioned IAM control deployment, main only | `.github/workflows/security-control.yml` | Scoped security automation role |
 | PR checks | `.github/workflows/ci.yml` | GitHub-hosted workers |
 | Main publish and digest deployment | `.github/workflows/release.yml` | Build role, then deployment role |
 | Workload and security policies | `deploy/kubernetes/base/` | Bootstrap administrator |
 | Typed output renderer | `scripts/deploy/render.py` | Operator |
 | First apply and API-key Secret | `scripts/deploy/bootstrap.py` | Bootstrap administrator |
 | Subsequent image update | `scripts/deploy/update_image.py` | Trusted release role |
+
+The [security control](../security/README.md) is deployed separately by changing
+`security/control.json` on main. Security-only commits skip the application release.
+Terraform validation is outside reusable demo checks and runs only for infrastructure
+edits or explicit dispatch. The five-step demo never runs Terraform.
 
 Provision the AWS environment using the infrastructure runbook first. An EKS bootstrap administrator must be one of the explicit Terraform access-entry ARNs; the engineer, support, and release roles cannot bootstrap cluster resources. Required tools are Python 3.12, PyYAML (`python -m pip install -e '.[dev]'`), AWS CLI v2, Docker for the first image, and kubectl within one minor version of EKS. The default cluster and CI schema target are Kubernetes 1.35. Match the schema check if changing that version.
 

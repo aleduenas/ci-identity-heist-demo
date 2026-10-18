@@ -13,6 +13,7 @@ A private, modular AWS lab that models a fictional bank's delivery and employee-
 - A layered FastAPI transfer API with atomic balance updates and durable idempotency.
 - A local Keycloak SAML IdP with separate engineer and support identities; temporary AWS credentials.
 - GitHub Actions checks, immutable image publishing, OIDC AWS roles and trusted private-runner deployment.
+- A [versioned security switch](security/README.md), deployed directly to IAM by a scoped GitHub OIDC role; no Terraform or local AWS session during the demo.
 - Namespace RBAC, Pod Identity, workload restrictions, structured request logs, EKS audit logs and CloudTrail table events.
 - Local Docker Compose, synthetic fixtures, tests, bootstrap scripts and teardown procedures.
 
