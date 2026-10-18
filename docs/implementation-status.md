@@ -1,6 +1,6 @@
 # Implementation handoff
 
-Updated: 2026-10-17.
+Updated: 2026-10-18.
 
 ## Active detection continuation
 
@@ -14,7 +14,14 @@ Use [detection evidence](detection/evidence.md) for results.
   emitted subject was verified live.
 - Live detection results: N2 `expected_release`; A2 unreviewed PR `pr_role_misuse` with an observed TTD of 31.1 s; B2
   PR denied while main succeeds; live missing-context gives `context_not_verified`. The mock-agent role was verified inspect-only.
-- The lab was then **destroyed**; only the audit evidence bucket remains in sandbox state (`force_destroy=false`).
+- The lab was then **destroyed** on 2026-10-17; only the audit evidence bucket remained in sandbox state (`force_destroy=false`).
+- 2026-10-18: the full sandbox is **applied again** (current Terraform state holds the live EKS cluster, nodes,
+  VPC, DynamoDB tables, delivery, identity and operations), superseding the 2026-10-17 teardown note above.
+- 2026-10-18: the exercise component rename **d2 -> detection** (commit `035ca6b`) was reconciled in the live
+  account via a real `terraform apply`: created `mybank-sandbox-detection-demo-deploy` and
+  `mybank-sandbox-detection-mock-agent`, destroyed the stale `mybank-sandbox-d2-*` roles, and flipped
+  `force_destroy` true->false on the audit and ECR buckets (benign, in-place). No EKS/network/data churn.
+  The GitHub Actions variable `DETECTION_DEMO_ROLE_ARN` was set to the new demo-deploy role ARN.
 - Not performed: application image publish/rollout, private runner, synthetic data seeding, SAML federation,
   live CNI enforcement, and any later attack step (deployment change, data read, egress).
 - Current local checks: Ruff passed; **70 pytest tests passed**; Terraform fmt passed.
