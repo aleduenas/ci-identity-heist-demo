@@ -36,7 +36,6 @@ def github(repo: dict, values: dict):
         "AWS_DEPLOY_ROLE_ARN": values["deploy_role_arn"],
         "EKS_CLUSTER_NAME": values["cluster_name"],
         "MYBANK_OIDC_RUN_CONTEXT": "true", "D2_DEMO_ROLE_ARN": values["d2_demo_role_arn"],
-        "D2_ACCOUNTS_TABLE": values["accounts_table_name"],
     }
     for name, value in variables.items():
         gh.set_var(repo, name, value)

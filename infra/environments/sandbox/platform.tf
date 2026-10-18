@@ -13,6 +13,7 @@ module "eks" {
   bootstrap_admin_role_arns = var.bootstrap_admin_role_arns
   console_viewer_arns       = var.console_viewer_arns
   addon_versions            = var.addon_versions
+  endpoint_public_access    = var.cluster_public_access
   depends_on                = [module.network]
 }
 
