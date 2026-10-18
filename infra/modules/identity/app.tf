@@ -22,7 +22,15 @@ resource "aws_iam_role_policy" "app" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      { Effect = "Allow", Action = "dynamodb:GetItem", Resource = values(var.table_arns) },
+      {
+        # The app serves customer/account/transfer data, so it holds table read access.
+        # The attacker who replaces the app inherits exactly this — enough to enumerate (Scan)
+        # and exfiltrate every record. Writes stay transaction-scoped below.
+        Effect = "Allow"
+        Action = ["dynamodb:GetItem", "dynamodb:BatchGetItem", "dynamodb:Query",
+        "dynamodb:Scan", "dynamodb:DescribeTable"]
+        Resource = values(var.table_arns)
+      },
       {
         Effect    = "Allow", Action = "dynamodb:UpdateItem", Resource = var.table_arns["accounts"]
         Condition = { "ForAnyValue:StringEquals" = { "dynamodb:EnclosingOperation" = ["TransactWriteItems"] } }
