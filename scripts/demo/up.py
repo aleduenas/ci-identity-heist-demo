@@ -37,6 +37,8 @@ def github(repo: dict, values: dict):
         "EKS_CLUSTER_NAME": values["cluster_name"],
         "MYBANK_OIDC_RUN_CONTEXT": "true",
         "DETECTION_DEMO_ROLE_ARN": values["detection_demo_role_arn"],
+        "SECURITY_CONTROL_ROLE_ARN": values["security_control_role_arn"],
+        "SECURITY_CONTROL_SUBJECT_PREFIX": values["security_control_subject_prefix"],
     }
     for name, value in variables.items():
         gh.set_var(repo, name, value)

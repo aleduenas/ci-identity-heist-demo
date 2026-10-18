@@ -33,6 +33,13 @@ Start [the local application](../README.md) and run `python scripts/checks/local
 
 ## AWS acceptance matrix
 
+- Security control: initial setup provisions the narrow automation role; a committed
+  setting change on main deploys through IAM without Terraform. The unchanged PR
+  attack is denied before credential issuance, a harmless PR passes, and main can
+  still obtain the same exercise role. Local control tests cover policy boundaries,
+  rejected unexpected policies, exact IAM writes and readback failures. They do not
+  establish a live deployment or branch-protection configuration.
+
 - Bootstrap admin: manifests apply, pods become ready, administrator port-forward reaches the API.
 - API: valid transfer updates both balances once; matching retry replays; conflicting retry and overdraft fail without partial ledger writes.
 - Engineer SAML session: EKS describe, workload read and logs succeed; Secret read, exec and direct table read fail.

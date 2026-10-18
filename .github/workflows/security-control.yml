@@ -1,0 +1,76 @@
+name: Deploy security control
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'security/control.json'
+      - 'scripts/detection/apply_control.py'
+      - '.github/workflows/security-control.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: exercise-security-control
+  cancel-in-progress: false
+
+jobs:
+  deploy-control:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+      DETECTION_DEMO_ROLE_ARN: ${{ vars.DETECTION_DEMO_ROLE_ARN }}
+      SECURITY_CONTROL_ROLE_ARN: ${{ vars.SECURITY_CONTROL_ROLE_ARN }}
+      SECURITY_CONTROL_SUBJECT_PREFIX: ${{ vars.SECURITY_CONTROL_SUBJECT_PREFIX }}
+      AWS_EC2_METADATA_DISABLED: 'true'
+    steps:
+      - name: Check one-time infrastructure setup
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${SECURITY_CONTROL_ROLE_ARN:?Provision the security control role and set this repository variable first}"
+          : "${DETECTION_DEMO_ROLE_ARN:?Set the exact exercise role ARN}"
+          : "${SECURITY_CONTROL_SUBJECT_PREFIX:?Set the immutable repository subject prefix}"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Queued runs reconcile current main, rather than restoring an older flag.
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install boto3==1.42.21
+      - name: Assume the narrowly scoped security automation role
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ env.SECURITY_CONTROL_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-duration-seconds: 900
+          role-session-name: security-control-${{ github.run_id }}
+      - name: Show, apply and verify the exercise trust policy
+        run: python scripts/detection/apply_control.py
+
+  verify-main-access:
+    needs: deploy-control
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      id-token: write
+    steps:
+      - name: Verify main can still obtain the same exercise role
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ vars.DETECTION_DEMO_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          role-duration-seconds: 900
+          role-session-name: control-main-proof-${{ github.run_id }}
+      - name: Show the legitimate issued identity without touching EKS or data
+        run: aws sts get-caller-identity

@@ -85,6 +85,12 @@ Acceptance requires documented provisioning, identity setup, daily delivery, tra
 `infra/` provisions AWS, `app/` owns the transactional API, `deploy/` owns Kubernetes manifests,
 and `identity/` owns optional employee federation. `scripts/demo/` coordinates the presentation;
 `scripts/detection/` contains the probe, independent collector, detector and prevention control.
+`security/control.json` is the versioned enforcement setting. A main-only GitHub
+workflow applies it directly through IAM using a separate automation role limited
+to reading/updating the exercise role's trust. Terraform provisions that automation
+role during initial sandbox setup; no Terraform runs during the demonstration.
+Main repository writers are trusted to deploy security changes; the automation
+role never accepts PR subjects, including when exercise enforcement is disabled.
 [DEMO.md](../DEMO.md) is the canonical flow. [Verification status](implementation-status.md)
 records what has actually been checked. Local operator files and internal planning stay outside Git.
 

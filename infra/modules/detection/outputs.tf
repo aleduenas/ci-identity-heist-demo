@@ -9,3 +9,7 @@ output "mock_agent_role_arn" {
 output "subject_patterns" {
   value = local.subject_patterns
 }
+
+output "security_control_role_arn" {
+  value = aws_iam_role.security_control.arn
+}

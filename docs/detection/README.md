@@ -1,5 +1,9 @@
 # Detection: PR validation obtaining the deployment identity
 
+The current presentation uses [GitHub-deployed prevention](../../security/README.md).
+This collector is optional supporting visibility; it is not needed to activate the
+control. Terraform is only used for initial sandbox provisioning, never during the demo.
+
 The detector evaluates one boundary of the [demo](../../DEMO.md): unreviewed PR code obtains the AWS identity intended for deployment. The demonstration uses an intentionally scoped exercise role and independently collected evidence, with no real infostealer or AI agent. When the attack block is uncommented it replaces the app container and reads the synthetic customer tables — invented data in an owned sandbox. The operator authors the simulated PR. A separately provisioned mock IAM role represents the concept's starting identity; AWS IAM does not itself grant GitHub access.
 
 **Status:** Live-validated 2026-10-17. N2 `expected_release`, A2 `pr_role_misuse` with an observed TTD of about 31 s, B2 PR denial with main still working, and a live `context_not_verified` gap. See the [sanitized evidence](evidence.md). That historical environment was torn down, then rebuilt. Current readiness is in [verification status](../implementation-status.md). The historical run captured the credential grab; it does not establish later app replacement or data access.

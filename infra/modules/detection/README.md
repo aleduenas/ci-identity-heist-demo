@@ -7,10 +7,13 @@ Local configuration is not evidence of AWS role acceptance or deployment.
 
 ## Activation
 
-The composition root sets `enable_detection = false` by default. When enabled, the
-demo role remains main-only unless `allow_pr_demo = true` is explicitly set for
-the bounded A2 exercise. Set it back to false for B2 and review/apply the change.
-Do not broaden the existing release-role trusts to accommodate this exercise.
+The composition root sets `enable_detection = false` by default. When enabled,
+it derives this module's `allow_pr_demo` from the committed `security/control.json`:
+enforcement `true` is main-only; `false` deliberately admits the synthetic PR attack.
+The module's own `allow_pr_demo` default remains false for other callers.
+Terraform provisions the sandbox once; it is never part of the presentation.
+During the demo, [GitHub Actions](../../../security/README.md) applies the setting
+directly through IAM. Do not broaden existing release roles for this exercise.
 
 ## GitHub subject contract
 
@@ -58,10 +61,15 @@ GitHub actor or push PRs: operator-made PR changes must be labeled simulations.
 
 The sandbox exports `detection_demo_role_arn` for repository variable
 `DETECTION_DEMO_ROLE_ARN`, `mock_agent_role_arn`, and `detection_subject_patterns`.
+It also exports `security_control_role_arn` and `security_control_subject_prefix`
+for `SECURITY_CONTROL_ROLE_ARN` and `SECURITY_CONTROL_SUBJECT_PREFIX`.
 Use the same demo role for N2 main and A2 PR runs. Use independently obtained
 GitHub run/attempt evidence; caller-selected role-session names are not proof.
 Never print or retain JWTs or temporary credentials as evidence.
 
-This module contains no detector, alert destination, GitHub workflow, budget,
-or application workload deployment. It implements only the IAM trust boundary
-described by the detection hypothesis.
+`control.tf` provisions a separate main-only automation role with only `iam:GetRole`
+and `iam:UpdateAssumeRolePolicy` on the exercise deployment role. It cannot modify
+itself or the baseline release roles. Its trust accepts main push/manual events,
+never PRs, regardless of the exercise setting. Main repository writers remain a
+trusted boundary; protect/review control changes using actual repository settings.
+This module provisions no detector, alert destination or application workload.

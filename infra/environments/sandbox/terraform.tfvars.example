@@ -11,5 +11,5 @@ enable_operations_host = true
 # Optional detection exercise; coordinate with the GitHub OIDC template first (docs/detection/README.md):
 # github_oidc_include_run_context = true
 # enable_detection                       = true
-# allow_pr_demo                   = false # true only during the bounded A2 run
+# PR trust is controlled by the committed security/control.json, not a tfvars toggle.
 # mock_operator_principal_arn     = "arn:aws:iam::123456789012:user/lab-operator"

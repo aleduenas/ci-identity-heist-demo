@@ -6,7 +6,7 @@ from scripts.checks.repository_hygiene import check
 
 
 @pytest.mark.parametrize("path", [
-    ".claude/settings.local.json", ".aws/credentials", "AGENTS.md",
+    ".claude/settings.local.json", ".aws/credentials", "AGENTS.md", "control-instructions.md",
     "docs/plan/take_home.md", "infra/backend.hcl", "infra/terraform.tfstate",
     ".env.production", "identity/generated/realm.json", "operator_credentials.csv",
 ])

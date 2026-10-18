@@ -6,7 +6,6 @@
   "enable_operations_host": true,
   "enable_detection": true,
   "cluster_public_access": true,
-  "allow_pr_demo": false,
   "github_oidc_include_run_context": true,
   "lab_teardown_force": false
 }

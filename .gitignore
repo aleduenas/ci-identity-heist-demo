@@ -38,6 +38,7 @@ dist/
 .playwright-mcp/
 docs/detection/generated/
 # Internal planning / handoff scaffolding (kept locally, not published)
+/control-instructions.md
 docs/detection/HANDOFF.md
 docs/plan/Mybank_AI_Agent_to_EKS_Tabletop_Attack_and_Detection_Plan.md
 docs/plan/

@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 INTERNAL = re.compile(
     r"(^|/)(?:\.aws|\.claude|\.codex|\.agents|\.internal|\.cache|\.tools|\.venv|"
-    r"\.terraform|__pycache__)(/|$)|(^|/)AGENTS\.md$|^docs/plan/|"
+    r"\.terraform|__pycache__)(/|$)|(^|/)(?:AGENTS|control-instructions)\.md$|^docs/plan/|"
     r"^(?:identity|deploy|docs/detection)/generated/|(^|/)backend\.hcl$|"
     r"\.tfstate|\.tfplan|\.tfvars(?:\.json)?$|(?:^|/)\.env(?:\..+)?$|"
     r"(?:_credentials.*\.csv|\.(?:pem|key|p12|pfx|saml|assertion))$"

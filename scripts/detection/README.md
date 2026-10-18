@@ -1,5 +1,11 @@
 # Detection operator commands
 
+For the presentation, use the [GitHub-deployed control](../../security/README.md):
+edit `security/control.json` on main and watch **Deploy security control**.
+`apply_control.py` is its self-contained implementation. No local AWS login,
+monitor or Terraform command is required during the demo. The commands below
+remain supporting investigation/manual recovery tools.
+
 Run these modules from the repository root with the development environment installed. They use the existing boto3 dependency and Python standard library. Read [the detection runbook](../../docs/detection/README.md) before live operation.
 
 | Command | Purpose |

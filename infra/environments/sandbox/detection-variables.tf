@@ -5,7 +5,7 @@ variable "enable_detection" {
 }
 
 variable "allow_pr_demo" {
-  description = "Temporarily allow A2 PR-context assumption of the isolated demo role; false is main-only."
+  description = "Deprecated compatibility input; security/control.json now owns exercise PR trust."
   type        = bool
   default     = false
 }

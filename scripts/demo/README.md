@@ -1,5 +1,9 @@
 # Demo commands
 
+The live control is deployed in GitHub by changing `security/control.json`; see
+[the control walkthrough](../../security/README.md). No Terraform or local operator
+command is part of activation. These modules are initial setup/support utilities.
+
 Operator commands behind [DEMO.md](../../DEMO.md). Run each as `.venv/Scripts/python.exe -m scripts.demo.<name>` from the repository root.
 
 | Command | What it does |
@@ -9,7 +13,7 @@ Operator commands behind [DEMO.md](../../DEMO.md). Run each as `.venv/Scripts/py
 | `app` | Private access to the app over SSM → EKS API → port-forward; fetches synthetic accounts (`--hold` keeps it open) |
 | `watch` | Security's independent watcher: CloudTrail + GitHub run records → live decisions and alerts |
 | `impact` | Post-grab proof (sandbox): uses the deployer identity to replace the app and read synthetic customer records, then restores the app |
-| `prevent on\|off` | Terraform way to toggle PR trust (used for the lab baseline). In the **demo**, apply the fix the AWS-native way instead: `python -m scripts.detection.set_trust block-pr\|allow-pr` |
+| `prevent` | Retired: exits with the GitHub workflow instructions and makes no changes |
 | `down` | Stops delivery, removes the runner, closes demo PRs, destroys the lab and checks compute/IP cleanup; retained storage may block destroy until explicitly emptied |
 
 Supporting modules: `ops` (AWS session, Terraform, tunnel), `gh` (repository identity, variables, runs), `runner` (main-only runner on the private host), `kube` (bootstrap and admin kubectl), `github_api` (token from env or Git Credential Manager; never printed or stored).

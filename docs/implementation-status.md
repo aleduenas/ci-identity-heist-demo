@@ -18,7 +18,35 @@ Read-only checks against the owned sandbox and GitHub confirmed:
   The outdated local `enable_d2` key was migrated to `enable_detection`, avoiding deletion of
   the exercise roles. Retained audit/ECR storage remains protected against automatic deletion.
 
-The live infrastructure matches the current demo configuration. No rebuild was required.
+Those observations describe the pre-control sandbox review; no rebuild was required.
+The additional security automation role below is prepared but not yet provisioned.
+
+## GitHub-deployed control, 2026-10-18
+
+- `security/control.json` is the versioned setting; it currently remains `false`
+  for the successful-attack portion of the synthetic demonstration.
+- `Deploy security control` runs only on main push/manual events and calls the
+  self-contained `scripts/detection/apply_control.py` directly through IAM.
+  It prints before/desired/saved policies and verifies readback. A separate job
+  proves main can still obtain the same exercise role.
+- Initial provisioning defines a separate main-only automation role with only
+  `iam:GetRole` and `iam:UpdateAssumeRolePolicy` on the exact exercise role.
+  A real refreshed setup plan contains **2 additions, 0 changes, 0 deletions**:
+  that role and its inline policy. No apply was performed for this change.
+- Initial Terraform provisioning and the workflow read the same committed setting.
+  The old root `allow_pr_demo` input is compatibility-only; the local Terraform
+  prevention command is retired. **No Terraform runs during the demo.**
+- Read-only inspection confirmed the live exercise trust matches the script's
+  expected permissive policy and the repository uses the expected immutable OIDC
+  subject. Main branch protection was absent at inspection; no protection setting
+  was changed or claimed as configured.
+- Local verification: **103 pytest tests**, **6 delivery tests**, Ruff, actionlint,
+  Terraform formatting and backend-free validation of both roots passed. The new
+  tests exercise both trust transitions, unexpected policy rejection, readback
+  failure and PR/main workflow boundaries. Publication hygiene reported no findings.
+- Pending initial setup: apply the reviewed role/policy plan, set the two new
+  repository variables, and rehearse the GitHub workflow. No live control activation,
+  PR denial or harmless retry is claimed for this new workflow yet.
 
 ## Recorded detection evidence
 
