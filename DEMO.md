@@ -60,6 +60,8 @@ Every stage is safe to re-run. If one fails, fix the cause and run `up` again.
 
 ## Run the demo (about 10 minutes)
 
+**Presenting live? Use [WALKTHROUGH.md](WALKTHROUGH.md)**: the same story performed by hand in GitHub and the AWS console, with every log and trace point. The commands below are the quick scripted version for rehearsals.
+
 Use two terminals.
 
 **Terminal 1: security's watcher.** Start it first and leave it running.
