@@ -27,7 +27,7 @@ from botocore import UNSIGNED
 from botocore.config import Config
 
 # Marker the attacker edits to make the PR trigger CI. Its value is irrelevant to the attack.
-MARKER = "original-harmless-probe"
+MARKER = "stolen-agent-change-064632"
 
 # -- Payload that runs INSIDE the hijacked app pod -----------------------------------------------
 # It runs as the app's own identity (via EKS Pod Identity), which has read access to the tables.
