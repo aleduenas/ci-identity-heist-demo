@@ -8,8 +8,8 @@ The detector evaluates one boundary of the [demo](../../DEMO.md): unreviewed PR 
 
 | Component | Authority and behavior |
 | --- | --- |
-| `.github/workflows/detection-demo.yml` | Hosted runner only; runs on relevant main changes/manual dispatch and same-repository PR updates |
-| `scripts/detection/demo_probe.py` | Harmless by default; a commented attack block grabs the exercise role and, on a PR, dumps the synthetic tables |
+| `.github/workflows/detection-demo.yml` | Displays as Application integration checks / transactions; hosted runner starts the Docker API and DynamoDB Local on relevant main changes/manual dispatch and same-repository PR updates |
+| `scripts/detection/demo_probe.py` | Runs real local API transaction checks by default; a commented attack block grabs the exercise role and, on a PR, dumps the synthetic tables |
 | `scripts/detection/collect.py` | Separate operator-side collection of AWS CloudTrail and GitHub run metadata |
 | `scripts/detection/detector.py` | Classifies expected main use, successful PR misuse, denial, or unverifiable context |
 | `scripts/detection/replay.py` | Invented offline examples, labeled as fixtures |

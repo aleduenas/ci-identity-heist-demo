@@ -52,8 +52,15 @@ no Python or Terraform source file exceeded 150 lines. The publication guard rep
 
 ## Remaining boundaries
 
-- The attack payload and attack workflow were left unchanged during this review. This audit did not
-  rerun the attack, prevention toggle, data extraction or application replacement.
+- A subsequent local CI correction changes the exercise check's display to **Application integration
+  checks / transactions** and makes its default entrypoint run real Docker API transaction checks,
+  replacing the previous status-only behavior. The workflow filename, attack payload, IAM scope,
+  and detector provenance contract are retained. Local validation passed Ruff, all 85 pytest tests,
+  all 6 delivery tests, Terraform formatting and validation of both roots, YAML/command inspection,
+  and publication hygiene. The changed default entrypoint passed real transactions in an isolated
+  Docker Compose project; its containers were removed afterward. Hosted GitHub Actions and AWS
+  acceptance of this correction remain unverified by these local checks.
+- The review did not rerun the attack, prevention toggle, data extraction or application replacement.
 - SAML federation and live network-policy enforcement were not exercised during this review.
 - Existing attack-related GitHub settings, including legacy `D2_*` variables, were left unchanged.
 - Removing files from current commits does not erase previous GitHub history; historical internal

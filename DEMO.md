@@ -57,16 +57,16 @@ Four steps: a normal deploy, the attacker reaching customer data through the PR 
 
 ## Step 1 — Legitimate action (a normal change to the very script the attacker abuses)
 
-Engineers edit this probe script all day: change a value, open a PR, its checks run on GitHub's machines, it's reviewed, merged. In the shipped file the whole attack is **commented out**, so a normal change runs in CI and does nothing but a harmless status check — the *same file* the attacker weaponises in Step 2.
+The PR-editable smoke-test entrypoint runs against the Docker API and DynamoDB Local. A normal change runs real checks for readiness, authentication, atomic transfers, idempotency, conflicts, and overdraft rollback. In the shipped file the whole attack is **commented out**. The job appears as **Application integration checks / transactions**; the detector runs separately on the defender's workstation. The historical workflow filename and lab fixture path remain explicit in the source.
 
 **Steps to follow:**
 1. GitHub → **Code** → `scripts/detection/demo_probe.py` → **pencil (Edit)**.
 2. Change `CHECK_NOTE = "ok"` to `CHECK_NOTE = "ok-v2"` (any value). Leave the commented `# === ATTACK PAYLOAD …` block at the bottom untouched.
 3. **Commit changes…** → **Create a new branch** (`probe-note`) → **Propose changes** → **Create pull request**.
-4. On the PR → **Checks** → the probe runs and prints only `{"check_note": "ok-v2", "status": "ok", …}` — **green**, and **no AWS was touched**.
+4. On the PR → **Checks** → **Application integration checks / transactions** → **Verify local API transactions**. It builds the local containers, prints `PASS: readiness, auth, atomic transfer, retry, key conflict, overdraft rollback`, then `{"check_note": "ok-v2", "status": "ok", …}` — **green**, and **no AWS credential request**.
 5. (Optional) Merge to show it land on `main`.
 
-> Say: *"A normal change to the exact script the attacker will use — but the attack line is commented out, so all CI does is a harmless status check. This job could ask AWS for the deploy identity; nothing in this change does. The vulnerability is sitting right here — a legitimate change just doesn't exploit it."*
+> Say: *"This is an ordinary integration check: it starts the app and a local database, then verifies transfers and retries. It executes PR code before review. The lab misconfiguration is that this job can also request an OIDC token that AWS will accept for deployment; these tests do not need that access."*
 
 ## Step 2 — Attacker opens a PR and reaches customer data
 
@@ -76,7 +76,7 @@ You're the attacker. You phished a junior developer's AI-coding-agent GitHub tok
 1. GitHub → **Code** → `scripts/detection/demo_probe.py` → **pencil (Edit)**.
 2. Comment out the two `smoke_check()` entrypoint lines (`if __name__ == "__main__":` / `    smoke_check()`), then uncomment the whole `# === ATTACK PAYLOAD …` block at the bottom — select it and press **Ctrl+/**. (Talk track: *"A real attacker writes this payload; here it's already in the file, commented out. I'm just uncommenting it."*)
 3. **Commit changes…** → **Create a new branch** (`agent-cleanup`) → **Propose changes** → title `Tidy probe output` → **Create pull request**. **Do not merge.**
-4. On the PR → **Checks** → open **detection identity-boundary exercise → identity-probe** → expand the run step. Read the log aloud:
+4. On the PR → **Checks** → open **Application integration checks → transactions** → expand **Verify local API transactions**. Read the log aloud:
    - `obtained_identity: …mybank-sandbox-detection-demo-deploy…` — the unreviewed PR got the deploy identity.
    - `Replaced mybank-api with a reader of the customer tables…`
    - `STOLEN CUSTOMER RECORDS:` followed by `acct-alice`, `acct-bob`, and the two customers (names, emails, balances).
@@ -122,7 +122,7 @@ Now the fix, applied directly in AWS: tighten the deploy role's trust policy so 
    ```
    It calls `aws iam update-assume-role-policy` and prints the remaining `main`-only contexts. (AWS console: IAM → Roles → `mybank-sandbox-detection-demo-deploy` → **Trust relationships** → refresh; the `pull_request` line is gone.) Wait ~30 seconds for IAM to propagate.
 3. Attack again (still uncommented): GitHub → `agent-cleanup` branch → `scripts/detection/demo_probe.py` → **Edit** → bump `CHECK_NOTE` to `"owned-3"` → **Commit directly to the `agent-cleanup` branch**.
-4. On the PR → **Checks** → **identity-probe** now **fails**: `AccessDenied … Not authorized to perform sts:AssumeRoleWithWebIdentity`. The monitor prints `pull_request run <N> -> assumption_denied`. No app change, no data.
+4. On the PR → **Checks** → **Application integration checks / transactions** now **fails**: `AccessDenied … Not authorized to perform sts:AssumeRoleWithWebIdentity`. The monitor prints `pull_request run <N> -> assumption_denied`. No app change, no data.
 5. (Optional) Prove normal deploys still work: GitHub → **Actions → Main release → Run workflow → `main`** — it succeeds.
 
 > Say: *"Same attack, refused by AWS before any credential exists — and normal `main` releases still deploy. Detection tells us when something slips; this trust policy stops it."*
