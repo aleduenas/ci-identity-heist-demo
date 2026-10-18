@@ -11,7 +11,7 @@ Everything is synthetic data in an owned sandbox; nothing leaves the cluster.
 import json
 from datetime import UTC, datetime
 
-CHECK_NOTE = "test"
+CHECK_NOTE = "tester"
 
 
 def smoke_check() -> None:
