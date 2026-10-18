@@ -12,9 +12,8 @@ One-time setup below must already be complete. Keep the attack PR open; do not m
 1. In GitHub **Code**, open [`scripts/detection/apply_control.py`](../scripts/detection/apply_control.py).
    Show the complete implementation. It reads one setting, builds the allowed
    trust policy, rejects unexpected live policies, calls IAM and verifies readback.
-   The IAM role and workflow are also reviewable in
-   [`control.tf`](../infra/modules/detection/control.tf) and
-   [`security-control.yml`](../.github/workflows/security-control.yml).
+   Show [`security-control.yml`](../.github/workflows/security-control.yml)
+   to explain how GitHub authenticates and runs that script.
 2. Open [`security/control.json`](control.json), click **Edit** and change
    `"enforcement_enabled": false` to `"enforcement_enabled": true`.
    Get this change onto `main` through the repository's authorized merge process.
@@ -45,6 +44,9 @@ access, while legitimate checks and main-context access continue to work."
 
 No Terraform runs anywhere in this demo sequence. Terraform is only for initial
 sandbox provisioning. The activation workflow calls IAM directly.
+Infrastructure CI is a separate workflow triggered by infrastructure-file changes;
+demo probe edits and the setting change do not start it. A security-only commit
+also skips the application release, so the toggle deploys only the IAM control.
 
 ## What each part of the code does
 

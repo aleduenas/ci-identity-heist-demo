@@ -3,6 +3,7 @@ name: Main release
 on:
   push:
     branches: [main]
+    paths-ignore: ['security/**']
   workflow_dispatch:
 
 permissions:

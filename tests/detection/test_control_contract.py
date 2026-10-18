@@ -33,3 +33,13 @@ def test_terraform_and_workflow_share_the_setting_and_limit_the_target():
     assert "Resource = aws_iam_role.demo_deploy.arn" in control
     assert '"ref:refs/heads/main"' in control
     assert "pull_request" not in control
+
+
+def test_demo_probe_edits_and_control_toggle_do_not_run_terraform():
+    workflows = ROOT / ".github/workflows"
+    assert "terraform" not in (workflows / "checks.yml").read_text().lower()
+    infra = yaml.load((workflows / "infrastructure.yml").read_text(), Loader=yaml.BaseLoader)
+    for event in ("push", "pull_request"):
+        assert infra["on"][event]["paths"] == ['infra/**', '.github/workflows/infrastructure.yml']
+    release = yaml.load((workflows / "release.yml").read_text(), Loader=yaml.BaseLoader)
+    assert "security/**" in release["on"]["push"]["paths-ignore"]

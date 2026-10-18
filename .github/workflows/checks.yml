@@ -31,27 +31,6 @@ jobs:
           docker compose up --build --wait --wait-timeout 180
           python scripts/checks/local_api.py
 
-  infrastructure:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
-        with:
-          terraform_version: '1.14.3'
-          terraform_wrapper: false
-      - run: terraform fmt -check -recursive infra
-      - name: Validate without AWS credentials or state access
-        shell: bash
-        run: |
-          set -euo pipefail
-          for directory in infra/bootstrap infra/environments/sandbox; do
-            terraform -chdir="$directory" init -backend=false -input=false
-            terraform -chdir="$directory" validate
-          done
-
   kubernetes:
     runs-on: ubuntu-24.04
     timeout-minutes: 10

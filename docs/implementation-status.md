@@ -19,7 +19,8 @@ Read-only checks against the owned sandbox and GitHub confirmed:
   the exercise roles. Retained audit/ECR storage remains protected against automatic deletion.
 
 Those observations describe the pre-control sandbox review; no rebuild was required.
-The additional security automation role below is prepared but not yet provisioned.
+The additional security automation role below has now been provisioned during
+explicitly approved initial setup.
 
 ## GitHub-deployed control, 2026-10-18
 
@@ -32,7 +33,8 @@ The additional security automation role below is prepared but not yet provisione
 - Initial provisioning defines a separate main-only automation role with only
   `iam:GetRole` and `iam:UpdateAssumeRolePolicy` on the exact exercise role.
   A real refreshed setup plan contains **2 additions, 0 changes, 0 deletions**:
-  that role and its inline policy. No apply was performed for this change.
+  that role and its inline policy. The user approved this initial setup; apply
+  completed with **2 added, 0 changed, 0 destroyed**.
 - Initial Terraform provisioning and the workflow read the same committed setting.
   The old root `allow_pr_demo` input is compatibility-only; the local Terraform
   prevention command is retired. **No Terraform runs during the demo.**
@@ -40,13 +42,23 @@ The additional security automation role below is prepared but not yet provisione
   expected permissive policy and the repository uses the expected immutable OIDC
   subject. Main branch protection was absent at inspection; no protection setting
   was changed or claimed as configured.
-- Local verification: **103 pytest tests**, **6 delivery tests**, Ruff, actionlint,
+- Local verification: **104 pytest tests**, **6 delivery tests**, Ruff, actionlint,
   Terraform formatting and backend-free validation of both roots passed. The new
   tests exercise both trust transitions, unexpected policy rejection, readback
   failure and PR/main workflow boundaries. Publication hygiene reported no findings.
-- Pending initial setup: apply the reviewed role/policy plan, set the two new
-  repository variables, and rehearse the GitHub workflow. No live control activation,
-  PR denial or harmless retry is claimed for this new workflow yet.
+- The new repository variables are configured. The initial automatic workflow run
+  stopped at its missing-setup guard; after setup, the
+  [off-state rehearsal](https://github.com/aleduenas/mybank-eks-sandbox/actions/runs/39170087344)
+  passed both `deploy-control` and `verify-main-access`. Enforcement remains false
+  for the successful-attack presentation. This validates live policy readback and
+  main credential issuance, not the on-transition or a fresh PR denial.
+- Hosted application, infrastructure and Kubernetes checks passed for implementation
+  commit `b66f149`; the existing identity boundary check also passed.
+- Infrastructure validation now has its own path-filtered workflow; probe edits and
+  the control setting do not trigger Terraform. Security-only commits skip the app
+  release. No Terraform executes in any of the five demo steps.
+- Pending live demo acceptance: turn the setting on through GitHub, show the
+  unchanged attack denied before credentials and show a fresh harmless PR passing.
 
 ## Recorded detection evidence
 

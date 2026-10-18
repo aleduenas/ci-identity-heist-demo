@@ -15,6 +15,8 @@ is [security/control.json](security/control.json), and
 [Deploy security control](.github/workflows/security-control.yml) applies it.
 No local terminal or AWS credentials are required during the presentation.
 **Terraform is only used for initial sandbox provisioning, never during the demo.**
+Infrastructure CI runs separately for infrastructure edits. Probe edits and the
+control toggle do not trigger it; security-only commits also skip the app release.
 
 ## Before presenting: initial setup and rehearsal
 
@@ -131,7 +133,7 @@ Historical detection evidence is in [docs/detection/evidence.md](docs/detection/
 | Unrecognized live trust policy | Compare the live role and exact repository prefix with initial setup; the script deliberately refuses unexpected policy shapes |
 | Attack still obtains credentials | Confirm the true-setting deployment finished; allow IAM propagation and use a fresh run |
 | Harmless check unexpectedly calls AWS | Use a clean branch with the attack commented, not the malicious PR |
-| Need to explain the AWS permission | Show [control.tf](infra/modules/detection/control.tf): two IAM actions on the exact exercise role |
+| Need to explain the AWS permission | Use the permission description in [security/README.md](security/README.md): two IAM actions on the exact exercise role |
 
 Record actual runs separately from static checks in
 [verification status](docs/implementation-status.md).

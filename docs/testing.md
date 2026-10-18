@@ -22,6 +22,11 @@ Start [the local application](../README.md) and run `python scripts/checks/local
 
 ## What each check proves
 
+Terraform CI runs in `.github/workflows/infrastructure.yml` only for infrastructure
+file/workflow edits or explicit manual dispatch. The reusable application/release
+checks do not run Terraform. Demo probe edits and `security/control.json` changes
+therefore run no Terraform; security-only main commits also skip the app release.
+
 | Check | Evidence | Remaining live check |
 | --- | --- | --- |
 | Unit/API tests | Conditions, retries, auth, privacy, fixture safety | AWS DynamoDB/IAM behaviour |
