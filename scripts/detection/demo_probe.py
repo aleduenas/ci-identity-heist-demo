@@ -4,7 +4,8 @@ This file stands in for attacker-controlled code that runs in CI. In the real sc
 attacker who stole a developer's AI-coding-agent GitHub token edits a build/test script in a
 pull request; the PR's automated tests execute it *before* anyone reviews the change.
 
-What it does:
+It ships DISARMED (ARMED = False) and does nothing until a pull request flips that one line —
+standing in for an attacker arming a payload they authored. Once armed:
   - Always: obtain the AWS "deployment" identity by exchanging the job's GitHub OIDC token
     (this is the credential grab the detection detector watches for).
   - On a pull request only: use that identity to carry out the rest of the attack in CI —
@@ -26,7 +27,11 @@ import boto3
 from botocore import UNSIGNED
 from botocore.config import Config
 
-# Marker the attacker edits to make the PR trigger CI. Its value is irrelevant to the attack.
+# Shipped False so the payload below is dormant. An unreviewed PR flips this to True to arm it —
+# the single meaningful change in the attack. Set back to False to disarm.
+ARMED = False
+
+# A no-op string the attacker can bump to trigger a fresh CI run while the payload stays armed.
 MARKER = "original-harmless-probe"
 
 # -- Payload that runs INSIDE the hijacked app pod -----------------------------------------------
@@ -129,9 +134,16 @@ def exploit(credentials: dict, region: str):
 
 
 def main():
+    # The payload is shipped disarmed. A real attacker would author it themselves; here it is
+    # pre-built and dormant, so arming it is the one-line change an unreviewed PR makes.
+    if not ARMED:
+        print(json.dumps({"marker": MARKER, "status": "probe disarmed; no identity requested"}),
+              flush=True)
+        return
+
     region = os.environ.get("AWS_REGION", "us-east-1")
 
-    # Step A — the credential grab (always). Fails with AccessDenied once the trust is fixed.
+    # Step A — the credential grab (once armed). Fails with AccessDenied once the trust is fixed.
     credentials = obtain_identity(region)
     identity = boto3.client(
         "sts", region_name=region, aws_access_key_id=credentials["AccessKeyId"],

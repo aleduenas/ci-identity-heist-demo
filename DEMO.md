@@ -15,7 +15,7 @@
 | Step | What you do | What they see |
 | --- | --- | --- |
 | 1. Legitimate change | A reviewed PR in the detection component → checks pass → merge | PR checks green; no AWS access |
-| 2. Attack reaches data | Open an unreviewed PR | Its CI job obtains the deploy identity, replaces the app, and prints `acct-alice`/`acct-bob` + customer records **in the Actions log** |
+| 2. Attack reaches data | Arm the payload in an unreviewed PR | Its CI job obtains the deploy identity, replaces the app, and prints `acct-alice`/`acct-bob` + customer records **in the Actions log** |
 | 3. Build detection (live) | Start the monitor; attack again | Monitor alerts `pr_role_misuse` in ~1 min — attack still succeeds |
 | 4. Build prevention (live) | Fix the role's trust in IAM; attack again | `AccessDenied` before any credential is issued; normal release still works |
 
@@ -70,11 +70,11 @@ Engineers change code in this component all day: edit a file, open a PR, its che
 
 ## Step 2 — Attacker opens a PR and reaches customer data
 
-You're the attacker. You phished a junior developer's AI-coding-agent GitHub token. You can't approve or merge — but you can open a PR, and this repo runs tests on PRs before review. You put your own code into a test script so it runs in CI, and that code grabs the deploy identity and uses it.
+You're the attacker. You phished a junior developer's AI-coding-agent GitHub token. You can't approve or merge — but you can open a PR, and this repo runs tests on PRs before review. The payload already sits in a PR-run test script (`demo_probe.py`), shipped **disarmed** — a stand-in for code an attacker authored. You arm it with a one-line flip, and the PR's automated tests run it before anyone reviews.
 
 **Steps to follow:**
 1. GitHub → **Code** → `scripts/detection/demo_probe.py` → **pencil (Edit)**.
-2. Change `MARKER = "original-harmless-probe"` to `MARKER = "owned-1"`.
+2. Change `ARMED = False` to `ARMED = True` — this arms the pre-built payload. (Talk track: *"A real attacker writes this payload; here it's already in the file, dormant. I'm just flipping it on."*)
 3. **Commit changes…** → **Create a new branch** (`agent-cleanup`) → **Propose changes** → title `Tidy probe output` → **Create pull request**. **Do not merge.**
 4. On the PR → **Checks** → open **detection identity-boundary exercise → identity-probe** → expand the run step. Read the log aloud:
    - `obtained_identity: …mybank-sandbox-detection-demo-deploy…` — the unreviewed PR got the deploy identity.
@@ -97,7 +97,7 @@ Nothing above noticed. The detection I built reads AWS's own credential-issuance
    . ./scripts/aws/session.ps1
    .venv/Scripts/python.exe -m scripts.demo.watch --minutes 60 --lookback 1
    ```
-3. Attack again: GitHub → `agent-cleanup` branch → `scripts/detection/demo_probe.py` → **Edit** → `MARKER = "owned-2"` → **Commit directly to the `agent-cleanup` branch**.
+3. Attack again (the payload is already armed): GitHub → `agent-cleanup` branch → `scripts/detection/demo_probe.py` → **Edit** → bump `MARKER` to `"owned-2"` → **Commit directly to the `agent-cleanup` branch**. (Bumping `MARKER` just triggers a fresh run; `ARMED` stays `True`.)
 4. Within ~1 minute the monitor prints:
    ```
    pull_request run <N> -> pr_role_misuse
@@ -121,7 +121,7 @@ Now the fix, applied directly in AWS: tighten the deploy role's trust policy so 
    .venv/Scripts/python.exe -m scripts.detection.set_trust block-pr
    ```
    It calls `aws iam update-assume-role-policy` and prints the remaining `main`-only contexts. (AWS console: IAM → Roles → `mybank-sandbox-detection-demo-deploy` → **Trust relationships** → refresh; the `pull_request` line is gone.) Wait ~30 seconds for IAM to propagate.
-3. Attack again: GitHub → `agent-cleanup` branch → `scripts/detection/demo_probe.py` → **Edit** → `MARKER = "owned-3"` → **Commit directly to the `agent-cleanup` branch**.
+3. Attack again (still armed): GitHub → `agent-cleanup` branch → `scripts/detection/demo_probe.py` → **Edit** → bump `MARKER` to `"owned-3"` → **Commit directly to the `agent-cleanup` branch**.
 4. On the PR → **Checks** → **identity-probe** now **fails**: `AccessDenied … Not authorized to perform sts:AssumeRoleWithWebIdentity`. The monitor prints `pull_request run <N> -> assumption_denied`. No app change, no data.
 5. (Optional) Prove normal deploys still work: GitHub → **Actions → Main release → Run workflow → `main`** — it succeeds.
 
@@ -129,7 +129,7 @@ Now the fix, applied directly in AWS: tighten the deploy role's trust policy so 
 
 **Technical explanation.** `set_trust block-pr` reads the role's live trust policy with the IAM API, drops the `pull_request` subject from its `StringLike` condition, and writes it back with `UpdateAssumeRolePolicy`. The PR job's `pull_request` subject no longer matches any allowed pattern, so `AssumeRoleWithWebIdentity` is denied — the job never gets credentials, so it can't reach the cluster or the data. The `main` patterns are untouched, so releases are unaffected.
 
-**Reset after the demo:** `.venv/Scripts/python.exe -m scripts.detection.set_trust allow-pr`, close the `agent-cleanup` PR without merging, and Ctrl+C the monitor.
+**Reset after the demo:** `.venv/Scripts/python.exe -m scripts.detection.set_trust allow-pr`, close the `agent-cleanup` PR without merging, and Ctrl+C the monitor. `ARMED` was flipped only on that throwaway branch, so `main` stays disarmed — nothing to revert there.
 
 ---
 
