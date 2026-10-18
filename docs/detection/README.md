@@ -1,15 +1,15 @@
 # Detection: PR validation obtaining the deployment identity
 
-This implementation evaluates one boundary in the immutable concept: unreviewed PR code obtains the AWS identity intended for deployment. The demonstration uses an intentionally scoped exercise role, a harmless script, and independently collected evidence. It does not execute an infostealer, impersonate a real AI agent, deploy an attacker container, or access customer data. The operator authors the simulated PR. A separately provisioned mock IAM role represents the concept's starting identity; AWS IAM does not itself grant GitHub access.
+This implementation evaluates one boundary in the immutable concept: unreviewed PR code obtains the AWS identity intended for deployment. The demonstration uses an intentionally scoped exercise role and independently collected evidence, with no real infostealer or AI agent. When the attack block is uncommented it replaces the app container and reads the synthetic customer tables — invented data in an owned sandbox. The operator authors the simulated PR. A separately provisioned mock IAM role represents the concept's starting identity; AWS IAM does not itself grant GitHub access.
 
-**Status:** Live-validated 2026-10-17. N2 `expected_release`, A2 `pr_role_misuse` with an observed TTD of about 31 s, B2 PR denial with main still working, and a live `context_not_verified` gap. See the [sanitized evidence](evidence.md). The lab compute was torn down afterwards. The full attack chain (deployment change, data read, egress) remains unproven.
+**Status:** Live-validated 2026-10-17. N2 `expected_release`, A2 `pr_role_misuse` with an observed TTD of about 31 s, B2 PR denial with main still working, and a live `context_not_verified` gap. See the [sanitized evidence](evidence.md). The lab compute was torn down afterwards. That recorded run captured the credential grab; the app-replacement and data-read steps are what the probe's attack block performs when run.
 
 ## Components and authority
 
 | Component | Authority and behavior |
 | --- | --- |
 | `.github/workflows/detection-demo.yml` | Hosted runner only; runs on relevant main changes/manual dispatch and same-repository PR updates |
-| `scripts/detection/demo_probe.py` | PR-editable harmless entrypoint; requests exercise credentials and calls `GetCallerIdentity` |
+| `scripts/detection/demo_probe.py` | Harmless by default; a commented attack block grabs the exercise role and, on a PR, dumps the synthetic tables |
 | `scripts/detection/collect.py` | Separate operator-side collection of AWS CloudTrail and GitHub run metadata |
 | `scripts/detection/detector.py` | Classifies expected main use, successful PR misuse, denial, or unverifiable context |
 | `scripts/detection/replay.py` | Invented offline examples, labeled as fixtures |
