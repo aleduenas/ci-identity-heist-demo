@@ -6,6 +6,7 @@ from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.api.dependencies import bank_service, require_api_key
+from app.release import RELEASE_NOTE
 from app.schemas import AccountResponse, TransferRequest, TransferResponse
 from app.service import BankService
 
@@ -16,7 +17,7 @@ Service = Annotated[BankService, Depends(bank_service)]
 
 @probes.get("/health")
 def health() -> dict:
-    return {"status": "ok"}
+    return {"status": "ok", "release_note": RELEASE_NOTE}
 
 
 @probes.get("/ready")

@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.release import RELEASE_NOTE
 
 PAYLOAD = {
     "transfer_id": "api-transfer",
@@ -14,7 +15,7 @@ PAYLOAD = {
 
 
 def test_health_readiness_and_transfer_contract(api):
-    assert api.get("/health").json() == {"status": "ok"}
+    assert api.get("/health").json() == {"status": "ok", "release_note": RELEASE_NOTE}
     assert api.get("/ready").status_code == 200
     assert api.get("/accounts/acct-alice").json()["balance_cents"] == 100_000
     result = api.post("/transfers", json=PAYLOAD)
