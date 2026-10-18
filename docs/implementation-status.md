@@ -4,7 +4,7 @@ Updated: 2026-10-17.
 
 ## Active D2 continuation
 
-Use [the D2 handoff checklist](d2/HANDOFF.md) as the current resumable ledger and [D2 evidence](d2/evidence.md) for results.
+Use [D2 evidence](d2/evidence.md) for results.
 
 - Verified temporary CLI/SDK access as sandbox user `codex-builder` in account `404824402451`.
 - Bootstrap state storage, narrow bootstrap role and a plain USD20 budget email alert are live (alert only).

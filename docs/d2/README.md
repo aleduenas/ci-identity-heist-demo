@@ -2,7 +2,7 @@
 
 This implementation evaluates one boundary in the immutable concept: unreviewed PR code obtains the AWS identity intended for deployment. The demonstration uses an intentionally scoped exercise role, a harmless script, and independently collected evidence. It does not execute an infostealer, impersonate a real AI agent, deploy an attacker container, or access customer data. The operator authors the simulated PR. A separately provisioned mock IAM role represents the concept's starting identity; AWS IAM does not itself grant GitHub access.
 
-**Status:** Live-validated 2026-10-17. N2 `expected_release`, A2 `pr_role_misuse` with an observed TTD of about 31 s, B2 PR denial with main still working, and a live `context_not_verified` gap. See the [sanitized evidence](evidence.md) and [handoff](HANDOFF.md). The lab compute was torn down afterwards. The full attack chain (deployment change, data read, egress) remains unproven.
+**Status:** Live-validated 2026-10-17. N2 `expected_release`, A2 `pr_role_misuse` with an observed TTD of about 31 s, B2 PR denial with main still working, and a live `context_not_verified` gap. See the [sanitized evidence](evidence.md). The lab compute was torn down afterwards. The full attack chain (deployment change, data read, egress) remains unproven.
 
 ## Components and authority
 
@@ -35,7 +35,7 @@ Expected fixture decisions are `expected_release`, `pr_role_misuse` despite the 
 
 ## Live prerequisites and subject migration
 
-Proceed only after the account check passes. The user has authorized the complete private EKS application environment for this exercise; its rollout remains on the [handoff checklist](HANDOFF.md). The focused detection itself requires only the identity boundary. Use the isolated `${name}-d2-demo-deploy` role exposed through `D2_DEMO_ROLE_ARN`; do not broaden the baseline release role. `GetCallerIdentity` proves the issued identity, not its EKS access.
+Proceed only after the account check passes. The user has authorized the complete private EKS application environment for this exercise; its rollout remains a tracked operator step. The focused detection itself requires only the identity boundary. Use the isolated `${name}-d2-demo-deploy` role exposed through `D2_DEMO_ROLE_ARN`; do not broaden the baseline release role. `GetCallerIdentity` proves the issued identity, not its EKS access.
 
 The immutable repository prefix currently documented by the source repository is:
 
@@ -103,4 +103,4 @@ Detection completion requires N2 to remain expected, A2 to successfully obtain t
 
 After retaining sanitized evidence, remove or disable `D2_DEMO_ROLE_ARN`, restore coordinated OIDC settings/trust/checker behavior, revoke the temporary detector GitHub credential, unset local token variables, and tear down the isolated exercise resources through the reviewed root procedure. Do not delete a shared GitHub OIDC provider. Confirm the normal release identity check works after restoration.
 
-Sources: [Immutable concept](../plan/Relay_AI_Agent_to_EKS_Tabletop_Attack_and_Detection_Plan.md), [D2 explanatory draft](../plan/d2-pr-role-assumption/draft.md), [GitHub OIDC](https://docs.github.com/en/actions/reference/security/oidc), [GitHub run attempts](https://docs.github.com/en/rest/actions/workflow-runs), [AWS STS logging](https://docs.aws.amazon.com/IAM/latest/UserGuide/cloudtrail-integration.html), [CloudTrail LookupEvents](https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_LookupEvents.html), [EventBridge management events](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-service-event-cloudtrail-management.html).
+Sources: [GitHub OIDC](https://docs.github.com/en/actions/reference/security/oidc), [GitHub run attempts](https://docs.github.com/en/rest/actions/workflow-runs), [AWS STS logging](https://docs.aws.amazon.com/IAM/latest/UserGuide/cloudtrail-integration.html), [CloudTrail LookupEvents](https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_LookupEvents.html), [EventBridge management events](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-service-event-cloudtrail-management.html).

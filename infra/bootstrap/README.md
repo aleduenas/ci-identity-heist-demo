@@ -16,8 +16,7 @@ The operator needs bucket provisioning permissions, and later `s3:ListBucket`, G
 `operator_principal_arns` creates `mybank-sandbox-bootstrap`, trusted only by the
 listed same-account IAM users/roles, with IAM permission to describe this lab
 cluster. The environment root must explicitly grant that role EKS/Kubernetes
-bootstrap access. It does not receive AWS AdministratorAccess. See the
-[active handoff](../../docs/d2/HANDOFF.md) before continuing a live setup.
+bootstrap access. It does not receive AWS AdministratorAccess.
 
 Optional `budget_alert_email` creates a plain USD20 monthly AWS budget that emails
 that address when actual spend exceeds the limit. It is an alert only: AWS Budgets

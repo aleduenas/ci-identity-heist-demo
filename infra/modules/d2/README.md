@@ -63,5 +63,5 @@ GitHub run/attempt evidence; caller-selected role-session names are not proof.
 Never print or retain JWTs or temporary credentials as evidence.
 
 This module contains no detector, alert destination, GitHub workflow, budget,
-or application workload deployment. See the immutable concept's D2 hypothesis in
-`docs/plan/Relay_AI_Agent_to_EKS_Tabletop_Attack_and_Detection_Plan.md`.
+or application workload deployment. It implements only the IAM trust boundary
+described by the D2 hypothesis.
