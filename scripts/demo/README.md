@@ -9,6 +9,7 @@ Operator commands behind [DEMO.md](../../DEMO.md). Run each as `.venv/Scripts/py
 | `app` | Private access to the app over SSM → EKS API → port-forward; fetches synthetic accounts (`--hold` keeps it open) |
 | `watch` | Security's independent watcher: CloudTrail + GitHub run records → live decisions and alerts |
 | `attack` | Opens an unreviewed PR that changes the PR-executed probe; `--again` pushes to the same PR |
+| `impact` | Post-grab proof (sandbox): uses the deployer identity to replace the app and read synthetic customer records, then restores the app |
 | `prevent on\|off` | Removes/restores PR trust on the exercise deploy role only |
 | `down` | Stops delivery, removes the runner, closes demo PRs, destroys the lab, verifies nothing billable remains |
 
