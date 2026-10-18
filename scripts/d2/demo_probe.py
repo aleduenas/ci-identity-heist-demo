@@ -19,7 +19,7 @@ import boto3
 from botocore import UNSIGNED
 from botocore.config import Config
 
-MARKER = "stolen-agent-change-062845"
+MARKER = "stolen-agent-change-063424"
 
 # Runs inside the hijacked pod (which carries the app's data-reading identity). No single quotes:
 # it is shell single-quoted below. Reads table names from the pod's own environment.
