@@ -76,7 +76,7 @@ You're the attacker. You phished a junior developer's AI-coding-agent GitHub tok
 1. GitHub → **Code** → `scripts/detection/demo_probe.py` → **pencil (Edit)**.
 2. Comment out the two `smoke_check()` entrypoint lines (`if __name__ == "__main__":` / `    smoke_check()`), then uncomment the whole `# === ATTACK PAYLOAD …` block at the bottom — select it and press **Ctrl+/**. (Talk track: *"A real attacker writes this payload; here it's already in the file, commented out. I'm just uncommenting it."*)
 3. **Commit changes…** → **Create a new branch** (`agent-cleanup`) → **Propose changes** → title `Tidy probe output` → **Create pull request**. **Do not merge.**
-4. On the PR → **Checks** → open **detection identity-boundary exercise → identity-probe** → expand the run step. Read the log aloud:
+4. On the PR → **Checks** → open **Identity boundary checks → verify-boundary** → expand the run step. Read the log aloud:
    - `obtained_identity: …mybank-sandbox-detection-demo-deploy…` — the unreviewed PR got the deploy identity.
    - `Replaced mybank-api with a reader of the customer tables…`
    - `STOLEN CUSTOMER RECORDS:` followed by `acct-alice`, `acct-bob`, and the two customers (names, emails, balances).
@@ -122,7 +122,7 @@ Now the fix, applied directly in AWS: tighten the deploy role's trust policy so 
    ```
    It calls `aws iam update-assume-role-policy` and prints the remaining `main`-only contexts. (AWS console: IAM → Roles → `mybank-sandbox-detection-demo-deploy` → **Trust relationships** → refresh; the `pull_request` line is gone.) Wait ~30 seconds for IAM to propagate.
 3. Attack again (still uncommented): GitHub → `agent-cleanup` branch → `scripts/detection/demo_probe.py` → **Edit** → bump `CHECK_NOTE` to `"owned-3"` → **Commit directly to the `agent-cleanup` branch**.
-4. On the PR → **Checks** → **identity-probe** now **fails**: `AccessDenied … Not authorized to perform sts:AssumeRoleWithWebIdentity`. The monitor prints `pull_request run <N> -> assumption_denied`. No app change, no data.
+4. On the PR → **Checks** → **verify-boundary** now **fails**: `AccessDenied … Not authorized to perform sts:AssumeRoleWithWebIdentity`. The monitor prints `pull_request run <N> -> assumption_denied`. No app change, no data.
 5. (Optional) Prove normal deploys still work: GitHub → **Actions → Main release → Run workflow → `main`** — it succeeds.
 
 > Say: *"Same attack, refused by AWS before any credential exists — and normal `main` releases still deploy. Detection tells us when something slips; this trust policy stops it."*
