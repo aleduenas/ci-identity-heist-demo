@@ -30,7 +30,7 @@ Operator (your terminal): run the monitor; apply the IAM trust fix.
 
 ## Part A — Stand it up (~20–25 min, unattended)
 
-From the repository root in PowerShell:
+From the repository root in PowerShell. For a fresh checkout, install the development dependencies, configure the state backend using [deployment setup](docs/deployment.md), and copy `infra/environments/sandbox/demo.tfvars.json.example` to ignored `.cache/sandbox.tfvars.json` with your account and bootstrap role. Keep `cluster_public_access=true` for this hosted-runner attack. Local tool/session setup is in [scripts/aws](scripts/aws/README.md).
 
 1. Sign in (browser; approve as **`demo-admin`**). Fixes any `profile demo-admin could not be found` error:
    ```powershell
@@ -104,7 +104,7 @@ Nothing above noticed. The detection I built reads AWS's own credential-issuance
        ALERT (high): Deployment credentials issued to PR validation
    ```
 
-> Say: *"The attack still succeeded — detection isn't prevention — but now security sees it within about a minute, with the role, the run link, and the evidence. It correlates AWS's signed record with GitHub's own run record; it ignores the attacker-chosen session name."*
+> Say: *"The attack still succeeded — detection isn't prevention — but now security sees it within about a minute, with the role, the run link, and the evidence. It correlates the AWS-recorded GitHub-signed subject with GitHub's own run record; it ignores the attacker-chosen session name."*
 
 ## Step 4 — Build the prevention and block it
 
@@ -138,7 +138,7 @@ Now the fix, applied directly in AWS: tighten the deploy role's trust policy so 
 ```powershell
 .venv/Scripts/python.exe -m scripts.demo.down
 ```
-Removes the runner, closes demo PRs, destroys the lab, and verifies no EKS cluster, instance, NAT gateway or elastic IP remains. State bucket, bootstrap role and budget alert are kept on purpose. At ~USD 0.35/hour you can also leave it up between rehearsals.
+Removes the runner, closes demo PRs, destroys the lab, and verifies no EKS cluster, instance, NAT gateway or elastic IP remains. State bucket, bootstrap role and budget alert are kept on purpose. Nonempty ECR and audit storage resist deletion by default; archive or explicitly empty only the lab's retained data and resume the same destroy, as described in [teardown](docs/teardown.md). Retained storage can still incur charges; see [cost guidance](docs/infrastructure.md).
 
 ## If something goes wrong
 

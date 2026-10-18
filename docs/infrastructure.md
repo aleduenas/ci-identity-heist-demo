@@ -1,6 +1,6 @@
 # Infrastructure operator guide
 
-The sandbox is code, not a provisioned AWS environment. It uses a dedicated AWS account, private EKS API/nodes, synthetic DynamoDB records, SAML employee roles, GitHub OIDC delivery roles and an optional SSM operations host. Review [architecture](architecture.md), [bootstrap](../infra/bootstrap/README.md) and [sandbox](../infra/environments/sandbox/README.md) before provisioning.
+Terraform defines the sandbox; the current demo is deployed as recorded in [verification status](implementation-status.md). It uses a dedicated AWS account, private worker nodes, an opt-in public EKS API for the hosted-runner demo, synthetic DynamoDB records, SAML employee roles, GitHub OIDC delivery roles and an optional SSM operations host. Review [architecture](architecture.md), [bootstrap](../infra/bootstrap/README.md) and [sandbox](../infra/environments/sandbox/README.md) before provisioning.
 
 ## Module boundaries
 
@@ -13,6 +13,7 @@ The sandbox is code, not a provisioned AWS environment. It uses a dedicated AWS 
 | identity | Pod Identity, optional SAML provider/employee roles | Identity passwords/Keycloak runtime |
 | delivery | ECR, GitHub OIDC and separate build/deploy roles | Runner registration |
 | operations | Optional private SSM host and basic tooling | Operator/runner credentials |
+| detection | Isolated exercise-role trust and mock identity | Detector process or PR content |
 
 ## Provisioning sequence
 
@@ -20,7 +21,7 @@ The sandbox is code, not a provisioned AWS environment. It uses a dedicated AWS 
 2. Review/apply the independent bootstrap state bucket. Protect its local state and back it up securely. Copy the backend and tfvars examples and replace placeholders. No credentials belong in those files.
 3. Before apply, run `aws eks describe-cluster-versions --region us-east-1` and review EKS support dates. The composition defaults to 1.35; compatible managed add-ons resolve through AWS at plan time and can be explicitly pinned. STANDARD support is configured.
 4. Initialize the environment S3 backend with native lockfiles, review a saved plan, and apply it manually. The provider's account allowlist rejects credentials for a different account. Provisioning requires network/EKS/EC2/IAM/DynamoDB/S3/CloudTrail/CloudWatch permissions and `iam:PassRole`; the release roles are deliberately insufficient for provisioning.
-5. Check the operations host SSM managed-instance status and cloud-init completion. Install remaining CLI/runner tooling from the delivery instructions. Use the documented VPC access route to bootstrap Kubernetes as the supplied administrator role. No public Kubernetes endpoint is needed.
+5. Check the operations host SSM managed-instance status and cloud-init completion. Install remaining CLI/runner tooling from the delivery instructions. Use the documented VPC access route to bootstrap Kubernetes as the supplied administrator role. Routine operator access can use the private endpoint. The demo explicitly sets `cluster_public_access=true` for the hosted PR runner; see [DEMO.md](../DEMO.md).
 6. Apply initial namespace/service-account/RBAC/config/Secret/Deployment manifests. The workload association already names `mybank/mybank-api`. Configure GitHub variables and register the trusted private runner. Do not run untrusted PR jobs there.
 7. Export `identity_configuration`, generate the Keycloak realm, and export its live signing metadata. Set `saml_metadata_path` to that file and review/apply a second plan. Only then do engineer/support roles exist and role claims become usable.
 
@@ -30,7 +31,7 @@ The repository's GitHub API settings were verified to use immutable subjects wit
 
 Bootstrap administrators have EKS cluster administration. Engineers describe EKS and join `mybank:engineers` for namespace read access. Support reads only the synthetic DynamoDB tables. The application has read access (get/query/scan) to its customer, account and transfer tables and makes only transaction-scoped account updates and transfer inserts — no customer writes or deletion. That table read access is what the detection exercise shows an attacker inheriting when they replace the app. The node and operations roles cannot read application tables. Release deployers can change workload code and therefore are trusted to exercise application permissions indirectly.
 
-After deployment verify positive and negative access cases with each real session. Support GetItem should succeed and PutItem should fail; engineer DescribeCluster/workload logs should succeed and DynamoDB GetItem should fail; deploy image rollout should succeed while secrets listing and unrelated namespaces fail. Inspect the Pod Identity role in CloudTrail, generate a transaction, and verify table data events arrive in the audit bucket. These are operator acceptance checks: local Terraform validation cannot prove live IAM, SAML, routing or audit delivery.
+After deployment verify positive and negative access cases with each real session. Support GetItem should succeed and PutItem should fail; engineer DescribeCluster/workload logs should succeed and DynamoDB GetItem should fail; deploy image rollout should succeed while secrets listing and unrelated namespaces fail. Inspect the Pod Identity role in CloudTrail, generate a transaction, and verify table data events arrive in the audit bucket. These are operator acceptance checks: local Terraform validation cannot prove live IAM, SAML, routing or audit delivery. The public control-plane endpoint still requires IAM authentication and Kubernetes RBAC; it does not expose the application Service.
 
 VPC CNI network policy is enabled in standard mode for reliable system-pod startup. There is a brief policy reconciliation gap for newly starting pods. Strict startup mode requires kube-system policies and explicit live testing. There is no public app ingress; access comes through a VPC-connected `kubectl port-forward` session.
 

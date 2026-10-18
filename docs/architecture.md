@@ -1,6 +1,6 @@
 # Mybank EKS sandbox architecture
 
-Status: implementation contract, 2026-10-13. Repository: `aleduenas/mybank-eks-sandbox` (private).
+Status: architecture aligned with the demo, 2026-10-18. Repository: `aleduenas/mybank-eks-sandbox` (private).
 
 ## Purpose and boundary
 
@@ -20,7 +20,7 @@ flowchart LR
   OIDC --> ECR[Private ECR image]
   CI --> CD[Trusted self-hosted runner inside VPC]
   CD --> Deploy[GitHub OIDC deploy role]
-  Deploy --> EKS[Private-endpoint EKS]
+  Deploy --> EKS[EKS: private operator access, public demo API]
   ECR --> EKS
   EKS --> API[Mybank FastAPI ClusterIP service]
   API --> Pod[Pod Identity application role]
@@ -33,11 +33,11 @@ flowchart LR
 
 ## AWS infrastructure
 
-One isolated VPC spans two availability zones. Private subnets host a small managed EKS node group with no public IPs. Public subnets contain a single NAT gateway for outbound image and package access; this is a documented lab cost and availability compromise. A DynamoDB gateway endpoint keeps database traffic within AWS networking. The Kubernetes API endpoint is private. ClusterIP application access is through `kubectl port-forward` from a VPC-connected machine; no public ingress is provisioned initially.
+One isolated VPC spans two availability zones. Private subnets host a small managed EKS node group with no public IPs. Public subnets contain a single NAT gateway for outbound image and package access; this is a documented lab cost and availability compromise. A DynamoDB gateway endpoint keeps database traffic within AWS networking. The Kubernetes API endpoint defaults to private. The [demo](../DEMO.md) explicitly enables `cluster_public_access=true` so the GitHub-hosted PR runner can reach the IAM/RBAC-authenticated API and demonstrate the deploy-to-data pivot. Worker nodes and the application Service remain private. ClusterIP application access is through `kubectl port-forward` from a VPC-connected machine; no public ingress is provisioned initially.
 
 EKS uses API access entries, explicitly assigned bootstrap administrators, and custom namespace RBAC for deployment and engineering. Managed add-ons include VPC CNI, kube-proxy, CoreDNS and the EKS Pod Identity agent. Workloads get their own IAM role through Pod Identity; node roles have no application-data privileges. ECR stores immutable image tags. DynamoDB uses on-demand capacity, encryption and point-in-time recovery. CloudTrail records management operations and data events on the lab's tables; EKS control-plane audit logging is enabled.
 
-Infrastructure modules separate networking, EKS, data, audit, identity, delivery IAM and an optional private operations host. The composition root only connects modules and exports operator-facing outputs. A bootstrap root prepares an encrypted, versioned S3 Terraform-state bucket with state locking. Kubernetes is installed in a separate phase after AWS provisioning, avoiding provider dependencies on a cluster that does not exist yet.
+Infrastructure modules separate networking, EKS, data, audit, identity, delivery IAM and an optional private operations host. An eighth, optional detection module owns the isolated exercise roles. The composition root only connects modules and exports operator-facing outputs. A bootstrap root prepares an encrypted, versioned S3 Terraform-state bucket with state locking. Kubernetes is installed in a separate phase after AWS provisioning, avoiding provider dependencies on a cluster that does not exist yet.
 
 ## Application and data contract
 
@@ -69,8 +69,8 @@ A private EC2 operations host with SSM access provides the runner machine and an
 
 ## Operational phases and acceptance
 
-1. Create and verify the private repository; commit this architecture before parallel implementation.
-2. Implement modules, app, identity fixtures and pipeline in disjoint directories.
+1. Use a private repository and dedicated synthetic AWS sandbox.
+2. Follow [DEMO.md](../DEMO.md) for the exercise; employee federation is optional supporting infrastructure.
 3. Run local checks and a container smoke test when tooling permits; record actual results.
 4. Operator creates state storage, reviews Terraform plan and applies AWS resources with an authenticated lab account.
 5. Operator bootstraps Kubernetes from inside the VPC, registers the trusted runner, configures repository variables, and exercises CI deployment.
@@ -80,16 +80,13 @@ A private EC2 operations host with SSM access provides the runner machine and an
 
 Acceptance requires documented provisioning, identity setup, daily delivery, transactional invariants, least-privilege checks and teardown. Terraform validation does not prove an AWS apply; application tests do not prove live EKS or SAML. Those distinctions remain visible in the implementation status.
 
-## Ownership and resumability
+## Component boundaries
 
-| Component | Paths | Responsibility |
-| --- | --- | --- |
-| Infrastructure | infra/ | Bootstrap state, six modules, environment root |
-| Application | app/, tests/app/, Dockerfile | API, repository, business invariants, fixtures |
-| Delivery | deploy/, .github/, scripts/deploy/, docs/delivery.md | Kubernetes, CI/CD, runner/bootstrap procedures |
-| Identity and integration | identity/, scripts/identity/, docs/, README.md | Keycloak SAML generation, operator guide, review |
-
-`docs/implementation-status.md` is the handoff ledger. Each component has a README and focused files. Large monolithic files are avoided; shared contracts are changed only with integration review. This design is independent of the older service-demand MLOps project brief supplied in the workspace instructions.
+`infra/` provisions AWS, `app/` owns the transactional API, `deploy/` owns Kubernetes manifests,
+and `identity/` owns optional employee federation. `scripts/demo/` coordinates the presentation;
+`scripts/detection/` contains the probe, independent collector, detector and prevention control.
+[DEMO.md](../DEMO.md) is the canonical flow. [Verification status](implementation-status.md)
+records what has actually been checked. Local operator files and internal planning stay outside Git.
 
 ## Source references
 

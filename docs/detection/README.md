@@ -1,8 +1,8 @@
 # Detection: PR validation obtaining the deployment identity
 
-This implementation evaluates one boundary in the immutable concept: unreviewed PR code obtains the AWS identity intended for deployment. The demonstration uses an intentionally scoped exercise role and independently collected evidence, with no real infostealer or AI agent. When the attack block is uncommented it replaces the app container and reads the synthetic customer tables — invented data in an owned sandbox. The operator authors the simulated PR. A separately provisioned mock IAM role represents the concept's starting identity; AWS IAM does not itself grant GitHub access.
+The detector evaluates one boundary of the [demo](../../DEMO.md): unreviewed PR code obtains the AWS identity intended for deployment. The demonstration uses an intentionally scoped exercise role and independently collected evidence, with no real infostealer or AI agent. When the attack block is uncommented it replaces the app container and reads the synthetic customer tables — invented data in an owned sandbox. The operator authors the simulated PR. A separately provisioned mock IAM role represents the concept's starting identity; AWS IAM does not itself grant GitHub access.
 
-**Status:** Live-validated 2026-10-17. N2 `expected_release`, A2 `pr_role_misuse` with an observed TTD of about 31 s, B2 PR denial with main still working, and a live `context_not_verified` gap. See the [sanitized evidence](evidence.md). The lab compute was torn down afterwards. That recorded run captured the credential grab; the app-replacement and data-read steps are what the probe's attack block performs when run.
+**Status:** Live-validated 2026-10-17. N2 `expected_release`, A2 `pr_role_misuse` with an observed TTD of about 31 s, B2 PR denial with main still working, and a live `context_not_verified` gap. See the [sanitized evidence](evidence.md). That historical environment was torn down, then rebuilt. Current readiness is in [verification status](../implementation-status.md). The historical run captured the credential grab; it does not establish later app replacement or data access.
 
 ## Components and authority
 
@@ -35,7 +35,7 @@ Expected fixture decisions are `expected_release`, `pr_role_misuse` despite the 
 
 ## Live prerequisites and subject migration
 
-Proceed only after the account check passes. The user has authorized the complete private EKS application environment for this exercise; its rollout remains a tracked operator step. The focused detection itself requires only the identity boundary. Use the isolated `${name}-detection-demo-deploy` role exposed through `DETECTION_DEMO_ROLE_ARN`; do not broaden the baseline release role. `GetCallerIdentity` proves the issued identity, not its EKS access.
+Proceed only after the account check passes. The hosted-runner demo uses the explicitly enabled public EKS API and a private application Service; follow [DEMO.md](../../DEMO.md). The focused detection itself requires only the identity boundary. Use the isolated `${name}-detection-demo-deploy` role exposed through `DETECTION_DEMO_ROLE_ARN`; do not broaden the baseline release role. `GetCallerIdentity` proves the issued identity, not its EKS access.
 
 The immutable repository prefix currently documented by the source repository is:
 
@@ -58,7 +58,7 @@ The detector expects this repository-level subject template in this exact order:
 
 For example, the resulting PR subject would end in `:pull_request:event_name:pull_request:run_id:123:run_attempt:1`. The main comparison would contain `:ref:refs/heads/main:event_name:workflow_dispatch:run_id:124:run_attempt:1`, or `event_name:push`. GitHub supplies the run identifiers inside the signed token; AWS's accepted subject is the link to the independent GitHub lookup. Environment-based and other subject structures intentionally return an evidence gap.
 
-**This is a repository-wide OIDC change.** An optional coordinated baseline migration is now implemented locally: `github_oidc_include_run_context=true` enables main-only custom trust, and repository variable `MYBANK_OIDC_RUN_CONTEXT=true` enables the matching release format check. Neither has been activated remotely. Coordinate Terraform trust, GitHub template and checker settings; record previous settings before changing them. Never broaden the baseline deployment role to PRs. Verify the emitted subject rather than relying on this example.
+**This is a repository-wide OIDC change.** An optional coordinated baseline migration is now implemented locally: `github_oidc_include_run_context=true` enables main-only custom trust, and repository variable `MYBANK_OIDC_RUN_CONTEXT=true` enables the matching release format check. Both are enabled in the current demo environment; verify before reusing another repository. Coordinate Terraform trust, GitHub template and checker settings; record previous settings before changing them. Never broaden the baseline deployment role to PRs. Verify the emitted subject rather than relying on this example.
 
 Set `DETECTION_DEMO_ROLE_ARN` as a GitHub repository variable, and retain the existing `AWS_REGION` variable or use the workflow's `us-east-1` default. Initially leave the variable unset until the isolated role and test configuration are ready; the job then skips.
 
@@ -85,7 +85,7 @@ For every successful event, the collector obtains `responseElements.subjectFromW
 
 | Test | Safe action | Required evidence/result |
 | --- | --- | --- |
-| N2 | Dispatch `detection-demo.yml` on `main`, or use its relevant main push | Successful STS event; independently matched main run; `expected_release` |
+| N2 (historical comparison) | Use an approved main-context identity check that actually requests the exercise role | Successful STS event; independently matched main run; `expected_release`. The currently shipped harmless probe does not request credentials on main. |
 | A2 | In an existing same-repository PR, uncomment the `run_attack()` block in `scripts/detection/demo_probe.py` (and bump `CHECK_NOTE` to force a fresh run) and push | PR synchronization starts hosted CI; credentials are issued under exercise permissive trust; independent result is `pr_role_misuse` |
 | Spoof check | Retain the workflow's `release-looking-demo` session name during A2 | The subject/run evidence still identifies PR context |
 | Context gap | Replay missing or mismatched metadata, or observe a genuine collection failure | `context_not_verified`, never an invented trusted match |

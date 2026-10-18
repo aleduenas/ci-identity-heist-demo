@@ -1,6 +1,6 @@
 # Reach the private EKS API
 
-AWS provisioning uses AWS public service APIs; Kubernetes bootstrap uses the private cluster endpoint. The optional operations module supplies a private AL2023 host with no inbound security-group rules and only an SSM instance role. It can forward traffic to EKS while your workstation keeps the administrator credentials. It is also the trusted GitHub runner host.
+AWS provisioning uses AWS public service APIs; The standard Kubernetes bootstrap path uses the private cluster endpoint. The demo also enables the public EKS API for its GitHub-hosted PR runner; this guide describes the separate private operator path. The optional operations module supplies a private AL2023 host with no inbound security-group rules and only an SSM instance role. It can forward traffic to EKS while your workstation keeps the administrator credentials. It is also the trusted GitHub runner host.
 
 Install AWS CLI v2, the AWS Session Manager plugin, kubectl and the Python project environment on your workstation. Authenticate as an operator that has permission to start/terminate SSM sessions on this host and an EKS access entry matching a bootstrap administrator ARN. The instance role cannot grant itself cluster access.
 

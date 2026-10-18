@@ -11,7 +11,24 @@ infra/**/backend.hcl
 *.tfvars
 !*.tfvars.example
 .env
+.env.*
 !.env.example
+.aws/
+.claude/
+.codex/
+.agents/
+.internal/
+AGENTS.md
+*.pem
+*.key
+*.p12
+*.pfx
+*.saml
+*.assertion
+*.tfplan.*
+*.plan
+crash.log
+crash.*.log
 identity/generated/
 .tools/
 .cache/
@@ -23,3 +40,4 @@ docs/detection/generated/
 # Internal planning / handoff scaffolding (kept locally, not published)
 docs/detection/HANDOFF.md
 docs/plan/Mybank_AI_Agent_to_EKS_Tabletop_Attack_and_Detection_Plan.md
+docs/plan/

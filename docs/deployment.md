@@ -49,6 +49,6 @@ Verify real engineer and support sessions against both allowed and denied operat
 
 ## 6. Record acceptance and teardown
 
-Record results using [the testing matrix](testing.md) and [observability guide](observability.md). Update the [handoff ledger](implementation-status.md) with account/region, image digest, exercise timestamp and outstanding issues, excluding credentials/assertions/customer fields.
+Record results using [the testing matrix](testing.md) and [observability guide](observability.md). Update the [handoff ledger](implementation-status.md) with sanitized region, image provenance, exercise timestamp and outstanding issues, excluding credentials/assertions/customer fields.
 
 Use [the teardown sequence](teardown.md) after the exercise. Retained state/audit storage has a separate lifecycle from compute.

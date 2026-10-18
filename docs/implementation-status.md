@@ -1,89 +1,60 @@
-# Implementation handoff
+# Demo verification status
 
-Updated: 2026-10-18.
+Updated: 2026-10-18. [DEMO.md](../DEMO.md) defines the current flow.
 
-## Active detection continuation
+## Current environment
 
-Use [detection evidence](detection/evidence.md) for results.
+Read-only checks against the owned sandbox and GitHub confirmed:
 
-- Verified temporary CLI/SDK access as sandbox user `codex-builder` in account `404824402451`.
-- Bootstrap state storage, narrow bootstrap role and a plain USD20 budget email alert are live (alert only).
-- detection code, OIDC run-context migration and docs are committed and pushed to `main`; hosted CI is green.
-- 2026-10-17: the full private sandbox was **applied** (65 resources, EKS 1.35 private endpoint only, healthy
-  nodes, add-ons and SSM). The GitHub OIDC template and `MYBANK_OIDC_RUN_CONTEXT` were switched together, and the
-  emitted subject was verified live.
-- Live detection results: N2 `expected_release`; A2 unreviewed PR `pr_role_misuse` with an observed TTD of 31.1 s; B2
-  PR denied while main succeeds; live missing-context gives `context_not_verified`. The mock-agent role was verified inspect-only.
-- The lab was then **destroyed** on 2026-10-17; only the audit evidence bucket remained in sandbox state (`force_destroy=false`).
-- 2026-10-18: the full sandbox is **applied again** (current Terraform state holds the live EKS cluster, nodes,
-  VPC, DynamoDB tables, delivery, identity and operations), superseding the 2026-10-17 teardown note above.
-- 2026-10-18: the exercise component rename **d2 -> detection** (commit `035ca6b`) was reconciled in the live
-  account via a real `terraform apply`: created `mybank-sandbox-detection-demo-deploy` and
-  `mybank-sandbox-detection-mock-agent`, destroyed the stale `mybank-sandbox-d2-*` roles, and flipped
-  `force_destroy` true->false on the audit and ECR buckets (benign, in-place). No EKS/network/data churn.
-  The GitHub Actions variable `DETECTION_DEMO_ROLE_ARN` was set to the new demo-deploy role ARN.
-- Not performed: application image publish/rollout, private runner, synthetic data seeding, SAML federation,
-  live CNI enforcement, and any later attack step (deployment change, data read, egress).
-- Current local checks: Ruff passed; **70 pytest tests passed**; Terraform fmt passed.
+- AWS region `us-east-1`; EKS 1.35 is `ACTIVE` with both public and private API access.
+  Public control-plane access is intentional for the GitHub-hosted attack runner.
+  Worker nodes and the application Service remain private.
+- The application Deployment has two desired, ready and available replicas and uses an ECR digest.
+- GitHub repository visibility is private. Its main release runner is online and deployment is enabled.
+- The coordinated immutable OIDC subject includes repository, context, event, run ID and attempt.
+- The isolated detection role currently permits PR-context assumption for the demo;
+  the baseline release identities remain main-only.
+- A refreshed Terraform plan reports **no changes** with the reconciled local settings.
+  The outdated local `enable_d2` key was migrated to `enable_detection`, avoiding deletion of
+  the exercise roles. Retained audit/ECR storage remains protected against automatic deletion.
 
-The sections below retain the original implementation history; current live facts above supersede
-older statements that no AWS resources have been applied or all working changes were pushed.
+The live infrastructure matches the current demo configuration. No rebuild was required.
 
-## Completed
+## Recorded detection evidence
 
-- Created and verified private repository `https://github.com/aleduenas/mybank-eks-sandbox`.
-- Agreed architecture in `docs/architecture.md` before parallel implementation.
+The [2026-10-17 evidence](detection/evidence.md) records main-context classification,
+PR credential misuse with an observed 31.1-second detection time, PR denial after tightening
+trust, and an explicit missing-context result. That run used a different, private-endpoint
+historical environment and did not establish deployment mutation or customer-record access.
+Current application readiness does not prove the full attack has been rerun.
 
-## Implemented
+## Repository review
 
-- Infrastructure: seven modules, private EKS, DynamoDB, audit, SAML/workload identity, CI IAM and SSM operations host; separate state bootstrap and environment roots.
-- Application: layered transactional API, DynamoDB atomic persistence, idempotency, authentication, synthetic fixtures and privacy-preserving JSON request logs.
-- Delivery: restricted Kubernetes manifests, GitHub Actions OIDC build/deploy, immutable-image retries, bootstrap/render/rollout helpers and runner documentation.
-- Identity: local Keycloak, generated account-specific group claims, real metadata export and temporary STS profile helper.
-- Integration: root README, deployment/access/testing/evidence/teardown runbooks, account-checked AWS seeding and scoped continuation instructions.
+- The interview brief, draft write-up and outdated agent instructions are excluded from future
+  commits. Local copies of planning material remain in ignored storage.
+- Local assistant settings, AWS configuration, credentials, state, plans, generated identities
+  and generated evidence are ignored. Docker receives only application source and its manifest.
+- A focused credential-pattern scan of all 395 reachable historical blobs found no matches.
+  This checks recognizable token/key/JWT formats; it is not a guarantee that arbitrary secrets
+  cannot exist. Previously committed internal documents remain in Git history.
+- CI now checks publication hygiene. The check prints paths and rule names, never matched values.
+- Documentation distinguishes private application access from the public EKS control-plane API,
+  and current observations from historical acceptance results.
 
-## External prerequisites
+## Validation
 
-- AWS account, temporary CLI/SDK access, Session Manager plugin and bootstrap role are now prepared;
-  see the current checklist before using them because login can expire.
-- Operator registration of the trusted runner on the provisioned private operations host.
-- Account-specific Keycloak realm metadata and second Terraform apply for SAML; no paid/existing IdP required.
-- GitHub repository variables from Terraform outputs; deployment remains disabled until bootstrap is complete.
+Ruff, application/identity/detection tests, delivery contract tests, Terraform formatting and
+backend-free validation of both roots are required by [testing](testing.md). Results: **85 pytest tests passed**, **6 delivery tests passed**, Ruff and Terraform formatting
+passed, and both roots passed backend-free validation with checksum-verified provider caches.
+The Docker build and isolated Compose smoke passed readiness, authentication, atomic transfer,
+idempotency, conflict rejection and overdraft rollback. All local documentation links resolved;
+no Python or Terraform source file exceeded 150 lines. The publication guard reported zero findings.
 
-## Verification
+## Remaining boundaries
 
-- `pytest tests`: 32 passed on Python 3.14. One Starlette/HTTPX test-client deprecation warning; tests succeed.
-- `ruff check app tests identity scripts`: passed.
-- Delivery unittest discovery: 6 passed, covering manifests, permission boundaries and immutable publication retries.
-- Terraform 1.13.5 formatting and both root validations: passed. AWS provider 6.68.0 lockfiles verified for Linux and Windows.
-- Kubeconform 0.7.0: all 10 Kubernetes resources valid against 1.35.0 schemas.
-- Actionlint 1.7.7: all three workflows passed.
-- Docker build/runtime: Python 3.12 Linux CPU image runs as nonroot with read-only API filesystem; localhost probes healthy.
-- DynamoDB Local 3.1.0 API smoke: readiness, authentication, atomic balance updates, matching retry, conflicting retry and overdraft rollback passed.
-- Keycloak 26.6.4 local smoke: both employee profiles emitted separate role claims, AWS audience and signed assertions. Public metadata export succeeded. Assertions were not submitted to AWS.
-- [Final GitHub hosted CI](https://github.com/aleduenas/mybank-eks-sandbox/actions/runs/38353103026): application tests/container smoke, Terraform, Kubernetes and live GitHub OIDC claim-format checks all passed on code commit `05d8535`. AWS publish/deploy skipped as intended while repository variables are unset. Earlier implementation CI also passed. The final documentation-only handoff commit skips redundant CI.
-- GitHub API verified repository remains private and uses immutable OIDC subjects; AWS trust updated to the exact owner/repository IDs, with a hosted nonsecret claim-format check.
-
-At the original 2026-10-13 handoff, no AWS plan/apply, STS federation, live IAM/CNI enforcement,
-CloudTrail delivery or EKS rollout had been performed. The 2026-10-17 bootstrap apply and
-local-development CLI login are recorded above; they do not establish application deployment,
-employee SAML federation, live workload enforcement or detection. Original local SAML signatures
-were checked for presence, not independently verified cryptographically.
-
-## Repository layout verification
-
-- Private visibility and immutable OIDC settings were verified through GitHub's repository API.
-- All application, identity, script, test and Terraform code files are 116 lines or fewer. Transfer invariants and recovery tests are separate modules.
-- Local documentation links resolve; Git attributes preserve Linux line endings, including EC2 user-data shell scripts.
-- Original implementation and detection additions are committed and pushed;
-  ignored credentials, local state/plans, login cache and generated evidence remain excluded.
-
-## Continuation checklist
-
-1. Follow `docs/deployment.md` with an authenticated sandbox account; configure the state bucket and real bootstrap role.
-2. Review/apply AWS resources; save actual Terraform outputs and inspect healthy add-ons/SSM connectivity.
-3. Publish the first image and bootstrap Kubernetes; seed synthetic records and run the API smoke through administrator port-forward.
-4. Register/configure the trusted runner and repository variables, then prove a main-branch release.
-5. Generate the real account realm, export metadata and apply SAML; verify real engineer/support sessions and denied operations.
-6. Verify audit delivery and network enforcement; record live acceptance outcomes and retained image digests.
-7. Run teardown after the exercise, retaining only deliberately selected evidence/state.
+- The attack payload and attack workflow were left unchanged during this review. This audit did not
+  rerun the attack, prevention toggle, data extraction or application replacement.
+- SAML federation and live network-policy enforcement were not exercised during this review.
+- Existing attack-related GitHub settings, including legacy `D2_*` variables, were left unchanged.
+- Removing files from current commits does not erase previous GitHub history; historical internal
+  documents remain until a separately coordinated history cleanup.

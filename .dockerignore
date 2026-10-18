@@ -1,13 +1,7 @@
-.git
-.github
-.venv
-.tools
-.cache
-__pycache__
-*.egg-info
-.env
-identity/generated
-infra
-deploy
-docs
-tests
+# Only application source and its dependency manifest belong in the build context.
+*
+!pyproject.toml
+!app/
+!app/**
+**/__pycache__/
+**/*.pyc

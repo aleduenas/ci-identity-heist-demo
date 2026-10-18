@@ -1,6 +1,6 @@
 # Detection live evidence — 2026-10-17
 
-Sanitized summary of the live detection exercise in the owned sandbox (account `404824402451`, `ca-central-1`, private repository `aleduenas/mybank-eks-sandbox`). Raw collector output stays in ignored `docs/detection/generated/`; it holds only allowlisted fields (no JWT, credentials object, access-key ID or session token). All records, repository and identities are synthetic or lab-owned. Nothing here measures the later EKS-change, data-read or exfiltration steps of the concept.
+Sanitized summary of the live detection exercise in the owned sandbox (historical region `ca-central-1`, private repository `aleduenas/mybank-eks-sandbox`). Raw collector output stays in ignored `docs/detection/generated/`; it holds only allowlisted fields (no JWT, credentials object, access-key ID or session token). All records, repository and identities are synthetic or lab-owned. Nothing here measures the later EKS-change, data-read or exfiltration steps of the concept.
 
 ## Setup actually observed
 
@@ -38,5 +38,5 @@ The fixtures had assumed denied `AssumeRoleWithWebIdentity` events carry `reques
 ## Limitations
 
 - The collector used the operator's existing GitHub credential, held in memory in a separate trusted process, instead of a dedicated `Actions: read` token. Provenance is still independent of PR code, but the detector identity was not least-privilege.
-- `GetCallerIdentity` proves which identity was issued. The exercise role also had a real `mybank:deployers` EKS access entry, but no Kubernetes call was made and the application was not rolled out (handoff §7D not performed). The private runner, image publish and SAML federation were not exercised.
+- `GetCallerIdentity` proves which identity was issued. The exercise role also had a real `mybank:deployers` EKS access entry, but no Kubernetes call was made and the application was not rolled out (application acceptance not performed in that historical run). The private runner, image publish and SAML federation were not exercised.
 - No later attack steps (deployment change, data read, egress) were attempted or proven.

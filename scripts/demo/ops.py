@@ -11,6 +11,7 @@ import time
 from contextlib import contextmanager
 
 from scripts.aws.run import REGION, ROOT, operator_env
+from scripts.demo.config import settings
 
 TF = ROOT / ".tools/terraform/terraform.exe"
 SANDBOX = ROOT / "infra/environments/sandbox"
@@ -50,6 +51,7 @@ def terraform(*args: str, capture: bool = False) -> str:
 
 def tf_vars(repo: dict, **overrides) -> list[str]:
     """Bind trust to the actual git remote's immutable IDs, so a fresh repository just works."""
+    tfvars()
     pattern = f"{repo['prefix']}:{{context}}:event_name:{{event_name}}:run_id:*:run_attempt:*"
     values = {"github_owner": repo["owner"], "github_repository": repo["name"],
               "github_oidc_subject_prefix": repo["prefix"], "detection_sub_pattern": pattern,
@@ -71,7 +73,7 @@ def outputs() -> dict:
 
 
 def tfvars() -> dict:
-    return json.loads(TFVARS.read_text(encoding="utf-8"))
+    return settings(TFVARS, SANDBOX)
 
 
 def api_key() -> str:

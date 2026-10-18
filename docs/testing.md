@@ -5,6 +5,7 @@
 Install `python -m pip install -e '.[dev]'` in a virtual environment. Run:
 
 ```bash
+python scripts/checks/repository_hygiene.py
 ruff check app tests identity scripts
 pytest tests
 python -m unittest discover -s scripts/deploy -p 'test_*.py'
@@ -42,3 +43,14 @@ Start [the local application](../README.md) and run `python scripts/checks/local
 - Recovery: a known-good image digest rolls out; teardown removes compute while preserving selected evidence.
 
 Record commands/results with credentials and assertions excluded. [Implementation status](implementation-status.md) states what was actually run; this matrix is the remaining live acceptance plan.
+
+## Publication hygiene
+
+`python scripts/checks/repository_hygiene.py` scans tracked working files and new, unignored files.
+It rejects local/internal paths and recognizable credential formats without printing values.
+`--history` additionally scans every reachable historical blob and reports historical internal
+paths; the existing history contains old planning documents. Neither mode rewrites history.
+The guard supplements review rather than proving the absence of every possible secret.
+
+The full demo deliberately enables the EKS public API for GitHub-hosted PR jobs, while the app
+remains a private ClusterIP Service. Ordinary operator access may still use the SSM tunnel.

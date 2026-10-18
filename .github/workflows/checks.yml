@@ -18,6 +18,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -e '.[dev]'
+      - run: python scripts/checks/repository_hygiene.py
       - run: ruff check app tests identity scripts
       - run: pytest tests
       - name: Build containers and smoke-test real local transactions

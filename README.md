@@ -4,12 +4,12 @@
 
 A private, modular AWS lab that models a fictional bank's delivery and employee-access workflow: GitHub → CI/CD → EKS, SAML employee federation, and limited elevated customer-data access. All records and money movements are synthetic.
 
-The architecture was written and committed before three component agents implemented infrastructure, the application and delivery. Current verification and remaining operator steps are recorded in [the handoff ledger](docs/implementation-status.md).
+[DEMO.md](DEMO.md) defines the presentation flow and repository scope. The supporting architecture and runbooks describe the lab; [verification status](docs/implementation-status.md) separates observed results from untested steps.
 
 ## What is included
 
-- Seven Terraform modules: networking, EKS, data, audit, identity, delivery IAM and a private SSM operations host.
-- A private-endpoint EKS cluster, private worker nodes, ECR and DynamoDB tables.
+- Seven platform Terraform modules plus an optional detection module: networking, EKS, data, audit, identity, delivery IAM and a private SSM operations host.
+- Private worker nodes, ECR and DynamoDB tables. The demo enables the IAM/RBAC-authenticated public EKS API so GitHub-hosted PR jobs can reach it; the application remains ClusterIP-only.
 - A layered FastAPI transfer API with atomic balance updates and durable idempotency.
 - A local Keycloak SAML IdP with separate engineer and support identities; temporary AWS credentials.
 - GitHub Actions checks, immutable image publishing, OIDC AWS roles and trusted private-runner deployment.
@@ -28,7 +28,9 @@ identity/                Keycloak configuration, claim generation, metadata, STS
 scripts/access/          Private API tunnel
 scripts/data/            Account-checked AWS synthetic seeding
 scripts/deploy/          Manifest rendering, bootstrap, publication, rollout
-scripts/checks/          Local API and SAML smoke checks
+scripts/checks/          API/SAML smoke checks and publication hygiene
+scripts/demo/            Demo lifecycle and independent watcher
+scripts/detection/       PR probe, detector, collector and IAM trust control
 tests/                   Application and identity tests
 .github/                 CI/CD and reviewed dependency updates
 docs/                    Architecture, runbooks, evidence and handoff
@@ -57,7 +59,7 @@ The local database is in memory. Restarting it clears the fixtures; `docker comp
 
 Start with [the deployment sequence](docs/deployment.md). It links the individual state bootstrap, Terraform, private-access, Kubernetes, runner, SAML and seeding procedures. Region defaults to `us-east-1`. Use a dedicated sandbox account, review the plan, and provision with an authenticated operator role.
 
-AWS resources have **not** been applied. The code incurs AWS charges when applied; the [cost and teardown guidance](docs/infrastructure.md) identifies persistent resources. GitHub release jobs remain disabled until repository variables and the runner are configured.
+The demo sandbox has been applied. Its public EKS API, private release runner and healthy application were checked on 2026-10-18; see [verification status](docs/implementation-status.md). It incurs AWS charges while running; [cost and teardown guidance](docs/infrastructure.md) identifies persistent resources. A new installation must configure the repository variables and runner before enabling releases.
 
 ## Documentation and verification
 
@@ -75,4 +77,4 @@ AWS resources have **not** been applied. The code incurs AWS charges when applie
 | [Teardown](docs/teardown.md) | Stop the lab and handle retained storage |
 | [Implementation status](docs/implementation-status.md) | Verified results and continuation checklist |
 
-The environment is prepared for normal operations and authorized exercises. It contains no attack tooling or deliberately introduced vulnerabilities.
+The detection exercise deliberately allows PR-context assumption of an isolated deployment role during the attack phase. Its commented payload reads synthetic records through a replacement workload, then restores the application. Follow [DEMO.md](DEMO.md) to demonstrate detection and then block PR trust; baseline release roles remain main-only.
