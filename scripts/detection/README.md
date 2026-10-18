@@ -1,8 +1,5 @@
 # Detection operator commands
 
-<!-- The status line below is the edit target for Step 1 of DEMO.md: a reviewed, no-AWS change. -->
-**Component status:** operational
-
 Run these modules from the repository root with the development environment installed. They use the existing boto3 dependency and Python standard library. Read [the detection runbook](../../docs/detection/README.md) before live operation.
 
 | Command | Purpose |

