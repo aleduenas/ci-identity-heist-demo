@@ -86,7 +86,7 @@ For every successful event, the collector obtains `responseElements.subjectFromW
 | Test | Safe action | Required evidence/result |
 | --- | --- | --- |
 | N2 | Dispatch `detection-demo.yml` on `main`, or use its relevant main push | Successful STS event; independently matched main run; `expected_release` |
-| A2 | In an existing same-repository PR, uncomment the `run_attack()` call in `scripts/detection/demo_probe.py` (bump `PROBE_NOTE` to force a fresh run) and push | PR synchronization starts hosted CI; credentials are issued under exercise permissive trust; independent result is `pr_role_misuse` |
+| A2 | In an existing same-repository PR, uncomment the `run_attack()` block in `scripts/detection/demo_probe.py` (and bump `CHECK_NOTE` to force a fresh run) and push | PR synchronization starts hosted CI; credentials are issued under exercise permissive trust; independent result is `pr_role_misuse` |
 | Spoof check | Retain the workflow's `release-looking-demo` session name during A2 | The subject/run evidence still identifies PR context |
 | Context gap | Replay missing or mismatched metadata, or observe a genuine collection failure | `context_not_verified`, never an invented trusted match |
 | B2 | Separately switch exercise trust to main-only, then repeat PR and main | PR assumption denied; main still succeeds; retain independent evidence where available |
