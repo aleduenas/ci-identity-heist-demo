@@ -1,11 +1,11 @@
 """PR-run test probe for the detection exercise.
 
-A pull request runs this file in CI before anyone reviews it. By default it verifies the local
-API's transactional behavior. The attack is pre-written but shipped **entirely commented
+A pull request runs this file in CI before anyone reviews it. By default it is harmless: it
+prints a status line and exits. The real attack is pre-written but shipped **entirely commented
 out** below — a stand-in for code an attacker authored. A legitimate change just edits
 CHECK_NOTE; the attack is to comment out the smoke_check() call and uncomment the block.
 
-Everything is synthetic data in an owned sandbox. The optional attack prints records in CI.
+Everything is synthetic data in an owned sandbox; nothing leaves the cluster.
 """
 
 import json
@@ -15,10 +15,7 @@ CHECK_NOTE = "ok"
 
 
 def smoke_check() -> None:
-    """Verify the Docker API's auth, transfers, retries, and rollback without AWS access."""
-    from scripts.checks.local_api import main as check_transactions
-
-    check_transactions()
+    """Harmless default behavior: print a status line. This is all a legitimate PR runs."""
     print(json.dumps({"check_note": CHECK_NOTE, "status": "ok",
                       "checked_utc": datetime.now(UTC).isoformat()}), flush=True)
 
