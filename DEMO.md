@@ -14,7 +14,7 @@
 
 | Step | What you do | What they see |
 | --- | --- | --- |
-| 1. Legitimate change | A reviewed PR → merge → the pipeline deploys | PR checks green; new text live on the app |
+| 1. Legitimate change | A reviewed PR in the detection component → checks pass → merge | PR checks green; no AWS access |
 | 2. Attack reaches data | Open an unreviewed PR | Its CI job obtains the deploy identity, replaces the app, and prints `acct-alice`/`acct-bob` + customer records **in the Actions log** |
 | 3. Build detection (live) | Start the monitor; attack again | Monitor alerts `pr_role_misuse` in ~1 min — attack still succeeds |
 | 4. Build prevention (live) | Fix the role's trust in IAM; attack again | `AccessDenied` before any credential is issued; normal release still works |
@@ -55,18 +55,18 @@ Keep one browser tab on the GitHub repo. Optional: an AWS console tab as `demo-a
 
 Four steps: a normal deploy, the attacker reaching customer data through the PR pipeline, building the detection, then the fix that blocks it.
 
-## Step 1 — Legitimate action (a normal, reviewed deploy)
+## Step 1 — Legitimate action (a normal, reviewed change)
 
-Engineers change code here all day: edit a file, open a PR, it's reviewed, merged to `main`, and the trusted pipeline deploys it. This is the baseline the attacker abuses.
+Engineers change code in this component all day: edit a file, open a PR, its checks run on GitHub's machines, it's reviewed, and merged to `main`. This is the baseline the attacker abuses in Step 2 — the *same file area*, but through review instead of an unreviewed PR.
 
 **Steps to follow:**
-1. GitHub → **Code** → `app/release.py` → **pencil (Edit)**.
-2. Change the line to `RELEASE_NOTE = "hello from the panel"`.
-3. **Commit changes…** → **Create a new branch** (`release-note`) → **Propose changes** → **Create pull request**.
-4. On the PR, open **Checks** — they run on GitHub's machines and go **green**.
-5. (Optional) Merge to show it deploy.
+1. GitHub → **Code** → `scripts/detection/README.md` → **pencil (Edit)**.
+2. Change the status line to `**Component status:** operational (demo build)`.
+3. **Commit changes…** → **Create a new branch** (`status-note`) → **Propose changes** → **Create pull request**.
+4. On the PR, open **Checks** — **Pull request checks** run on GitHub's machines and go **green**.
+5. (Optional) Merge to show it land on `main`.
 
-> Say: *"Normal change, normal review. These PR tests run on GitHub's own machines with no AWS access. Only a merge to `main` deploys."*
+> Say: *"A normal change in the very component the attacker will touch — but through review. These PR checks run on GitHub's own machines with no AWS access; only a merge to `main` runs the release identity."*
 
 ## Step 2 — Attacker opens a PR and reaches customer data
 

@@ -63,9 +63,8 @@ def web_identity_token() -> str:
 def obtain_identity(region: str) -> dict:
     """Exchange the GitHub OIDC token for the deployment role's temporary AWS credentials.
 
-    This is the heart of detection: an unreviewed PR job calling
-    sts:AssumeRoleWithWebIdentity and AWS accepting it because the role's trust policy allows
-    the pull_request context. Once the trust
+    This is the heart of detection: an unreviewed PR job calls sts:AssumeRoleWithWebIdentity and
+    AWS accepts it because the role's trust policy allows the pull_request context. Once the trust
     is fixed (prevention), this call fails with AccessDenied and the attack stops right here.
     """
     sts = boto3.client("sts", region_name=region, config=Config(signature_version=UNSIGNED))
