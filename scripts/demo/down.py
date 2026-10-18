@@ -6,9 +6,11 @@ import boto3
 
 from scripts.aws.run import REGION
 from scripts.demo import gh, runner
-from scripts.demo.attack import PREFIX
 from scripts.demo.github_api import request
 from scripts.demo.ops import activate, ok, step, terraform, tf_vars
+
+# Branch name of the manual attack PR (DEMO.md Step 2), closed on teardown.
+PREFIX = "agent-cleanup"
 
 
 def github_cleanup(repo: dict):
