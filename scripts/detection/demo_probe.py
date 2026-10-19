@@ -9,7 +9,7 @@ Everything uses synthetic data in the owned lab. The attack copies pod output in
 the owned GitHub Actions log; no real records or separate webhook receiver are used.
 """
 
-CHECK_NOTE = "ok"
+CHECK_NOTE = "test"
 
 
 def smoke_check() -> None:
