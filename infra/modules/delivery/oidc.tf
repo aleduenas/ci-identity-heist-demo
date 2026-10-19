@@ -1,0 +1,40 @@
+resource "aws_iam_openid_connect_provider" "github" {
+  count          = var.existing_github_oidc_provider_arn == null ? 1 : 0
+  url            = "https://token.actions.githubusercontent.com"
+  client_id_list = ["sts.amazonaws.com"]
+}
+
+locals {
+  provider_arn = var.existing_github_oidc_provider_arn != null ? var.existing_github_oidc_provider_arn : aws_iam_openid_connect_provider.github[0].arn
+  subject      = "${var.github_oidc_subject_prefix}:ref:refs/heads/main"
+  subjects = var.github_oidc_include_run_context ? [for event in ["push", "workflow_dispatch"] :
+    "${local.subject}:event_name:${event}:run_id:*:run_attempt:*"
+  ] : [local.subject]
+  conditions = merge({
+    StringEquals = merge(
+      { "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com" },
+      var.github_oidc_include_run_context ? {} : { "token.actions.githubusercontent.com:sub" = local.subject }
+    )
+    }, var.github_oidc_include_run_context ? {
+    StringLike = { "token.actions.githubusercontent.com:sub" = local.subjects }
+  } : {})
+  trust = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow", Action = "sts:AssumeRoleWithWebIdentity", Principal = { Federated = local.provider_arn }
+      Condition = local.conditions
+    }]
+  })
+}
+
+resource "aws_iam_role" "build" {
+  name                 = "${var.name}-github-build"
+  assume_role_policy   = local.trust
+  max_session_duration = 3600
+}
+
+resource "aws_iam_role" "deploy" {
+  name                 = "${var.name}-github-deploy"
+  assume_role_policy   = local.trust
+  max_session_duration = 3600
+}

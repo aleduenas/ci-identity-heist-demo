@@ -1,0 +1,15 @@
+{
+  "realm": "mybank",
+  "enabled": true,
+  "displayName": "Mybank synthetic employee lab",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "loginWithEmailAllowed": false,
+  "bruteForceProtected": true,
+  "eventsEnabled": true,
+  "eventsExpiration": 86400,
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": false,
+  "eventsListeners": ["jboss-logging"]
+}

@@ -1,0 +1,1 @@
+"""Mybank synthetic banking API."""

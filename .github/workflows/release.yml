@@ -1,0 +1,94 @@
+name: Main release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['security/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mybank-main-release
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
+
+  verify-identity:
+    needs: checks
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      MYBANK_OIDC_RUN_CONTEXT: ${{ vars.MYBANK_OIDC_RUN_CONTEXT }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Verify immutable OIDC subject without contacting AWS
+        run: python3 scripts/checks/oidc_claims.py
+
+  publish:
+    needs: [checks, verify-identity]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      vars.AWS_REGION != '' && vars.AWS_BUILD_ROLE_ARN != '' &&
+      vars.ECR_REPOSITORY_URL != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REPOSITORY_URL: ${{ vars.ECR_REPOSITORY_URL }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c # v4
+        with:
+          role-to-assume: ${{ vars.AWS_BUILD_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: mybank-build-${{ github.run_id }}
+      - name: Publish commit image and resolve content digest
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/deploy/publish_image.py --repository "$ECR_REPOSITORY_URL" --commit "$GITHUB_SHA" --output "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: publish
+    if: >-
+      github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true' &&
+      vars.AWS_DEPLOY_ROLE_ARN != '' && vars.EKS_CLUSTER_NAME != ''
+    runs-on: [self-hosted, linux, x64, mybank-sandbox]
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c # v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: mybank-deploy-${{ github.run_id }}
+      - name: Update only the application image
+        env:
+          EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          IMAGE: ${{ needs.publish.outputs.image }}
+        run: |
+          python3 scripts/deploy/update_image.py --cluster "$EKS_CLUSTER_NAME" --region "$AWS_REGION" --image "$IMAGE"

@@ -1,0 +1,7 @@
+# Only application source and its dependency manifest belong in the build context.
+*
+!pyproject.toml
+!app/
+!app/**
+**/__pycache__/
+**/*.pyc
