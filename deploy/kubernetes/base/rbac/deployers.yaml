@@ -1,0 +1,31 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mybank-deployer
+rules:
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: [mybank-api]
+    verbs: [get, patch, watch]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mybank-deployers
+subjects:
+  - kind: Group
+    name: mybank:deployers
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: mybank-deployer
+  apiGroup: rbac.authorization.k8s.io

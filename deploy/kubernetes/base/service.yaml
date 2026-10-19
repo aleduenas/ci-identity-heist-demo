@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mybank-api
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: mybank-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

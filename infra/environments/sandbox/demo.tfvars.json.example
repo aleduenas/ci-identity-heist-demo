@@ -1,0 +1,11 @@
+{
+  "aws_account_id": "123456789012",
+  "aws_region": "us-east-1",
+  "name": "mybank-sandbox",
+  "bootstrap_admin_role_arns": ["arn:aws:iam::123456789012:role/LabAdministrator"],
+  "enable_operations_host": true,
+  "enable_detection": true,
+  "cluster_public_access": true,
+  "github_oidc_include_run_context": true,
+  "lab_teardown_force": false
+}
