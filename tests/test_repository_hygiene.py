@@ -10,6 +10,7 @@ from scripts.checks.repository_hygiene import check
     "docs/plan/draft.md", "infra/backend.hcl", "infra/terraform.tfstate",
     ".env.production", "identity/generated/realm.json", "operator_credentials.csv",
     "DEMO.md", "WALKTHROUGH.md", "docs/implementation-status.md",
+    "docs/repository-access.md",
     "docs/presentation/slides/01-intro.tex", "docs/presentation/deck.pdf",
     "docs/d2/HANDOFF.md", "docs/d2/evidence.md", "docs/detection/HANDOFF.md",
     "docs/detection/evidence.md", "docs/detection/control-evidence.md",

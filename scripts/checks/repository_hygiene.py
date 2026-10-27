@@ -10,7 +10,7 @@ INTERNAL = re.compile(
     r"(^|/)(?:\.aws|\.claude|\.codex|\.agents|\.internal|\.cache|\.tools|\.venv|"
     r"\.terraform|__pycache__)(/|$)|(^|/)(?:AGENTS|control-instructions)\.md$|"
     r"^(?:DEMO|WALKTHROUGH)\.md$|^docs/(?:plan|presentation)/|"
-    r"^docs/implementation-status\.md$|"
+    r"^docs/(?:implementation-status|repository-access)\.md$|"
     r"^docs/(?:d2|detection)/(?:HANDOFF|evidence|control-evidence)\.md$|"
     r"^(?:identity|deploy|docs/detection)/generated/|(^|/)backend\.hcl$|"
     r"\.tfstate|\.tfplan|\.tfvars(?:\.json)?$|(?:^|/)\.env(?:\..+)?$|"
