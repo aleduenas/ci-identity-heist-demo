@@ -1,4 +1,4 @@
-# Mybank EKS Sandbox
+# CI Identity Heist Purple Team Tabletop Excercise
 
 A security sandbox demonstrating how code in an unreviewed pull request can cross a CI identity boundary, obtain AWS deployment credentials, and read application data. An IAM trust control blocks the same attack before credentials are issued.
 
