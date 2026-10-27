@@ -15,9 +15,11 @@ permissions:
 jobs:
   verify-boundary:
     if: >-
+      github.actor == github.repository_owner &&
       vars.DETECTION_DEMO_ROLE_ARN != '' &&
       (github.ref == 'refs/heads/main' ||
       (github.event_name == 'pull_request' &&
+      github.event.pull_request.user.login == github.repository_owner &&
       github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-24.04
     timeout-minutes: 10

@@ -1,44 +1,42 @@
 # Mybank EKS Sandbox
 
-A private, modular AWS lab that models a fictional bank's delivery and employee-access workflow: GitHub → CI/CD → EKS, SAML employee federation, and limited elevated customer-data access. All records and money movements are synthetic.
+A security sandbox demonstrating how code in an unreviewed pull request can cross a CI identity boundary, obtain AWS deployment credentials, and read application data. An IAM trust control blocks the same attack before credentials are issued.
 
-The [architecture](docs/architecture.md) describes the system and trust boundaries. The lab centers on an IAM trust-boundary control: an isolated deployment role that an unreviewed pull request can assume while enforcement is off, and that only trusted `main` contexts can assume once it is enabled. See the [security control](security/README.md).
+Mybank is a fictional banking API running on AWS EKS with DynamoDB and GitHub Actions. All customer records, accounts, and transfers are synthetic. The repository includes the application, infrastructure, attack and control implementations, setup instructions, and recorded CI evidence.
 
-## What is included
+**Current state:** the AWS environment is torn down. Live release, attack-demo, and control-deployment workflows are disabled; the recorded runs below remain the demonstration. Local application and infrastructure validation checks remain available.
 
-- AWS networking, EKS, data storage, audit logging, employee identity, delivery roles and a private SSM operations host.
-- Private worker nodes, ECR and DynamoDB tables. The lab enables the IAM/RBAC-authenticated public EKS API so GitHub-hosted PR jobs can reach it; the application remains ClusterIP-only.
-- A layered FastAPI transfer API with atomic balance updates and durable idempotency.
-- A local Keycloak SAML IdP with separate engineer and support identities; temporary AWS credentials.
-- GitHub Actions checks, immutable image publishing, OIDC AWS roles and trusted private-runner deployment.
-- A [versioned IAM control](security/README.md), enabled through `security/control.json` and deployed to IAM by a scoped GitHub OIDC role.
-- Namespace RBAC, Pod Identity, workload restrictions, structured request logs, EKS audit logs and CloudTrail table events.
-- Local Docker Compose, synthetic fixtures, tests, bootstrap scripts and teardown procedures.
+## Watch the demonstration
 
-## Repository boundaries
+Open either run below, select **verify-boundary**, and expand **Execute PR-editable probe (grabs the identity; on a PR, demonstrates impact)**.
 
-```text
-app/                     API, business rules, persistence, fixtures, request logging
-infra/                   Environment setup and component definitions
-deploy/kubernetes/       Workload, namespace, RBAC and network manifests
-identity/                Keycloak configuration, claim generation, metadata, STS
-scripts/access/          Private API tunnel
-scripts/data/            Account-checked AWS synthetic seeding
-scripts/deploy/          Manifest rendering, bootstrap, publication, rollout
-scripts/checks/          API/SAML smoke checks and publication hygiene
-scripts/demo/            Exercise lifecycle coordination and independent watcher
-scripts/detection/       PR probe, detector, collector and IAM trust control
-security/                Versioned enforcement setting and control explanation
-tests/                   Application, identity, detection and security-control checks
-.github/                 CI/CD and reviewed dependency updates
-docs/                    Architecture, runbooks and operational guides
-```
+| Control | Recorded run | What to look for |
+| --- | --- | --- |
+| Off | [Attack obtains deployment credentials and reads synthetic records](https://github.com/aleduenas/ci-identity-heist-demo/actions/runs/39293282632/job/118199178766) | An assumed-role identity, followed by `STOLEN CUSTOMER RECORDS` in the CI log. |
+| On | [Same attack blocked by IAM](https://github.com/aleduenas/ci-identity-heist-demo/actions/runs/39293816912/job/118201042196) | `AssumeRoleWithWebIdentity` is denied before the payload can replace the application. The failed check is the expected prevention result. |
 
-Identity passwords and runner registration tokens remain outside version control. Administrative bootstrap and routine releases use different privileges. Component READMEs describe their contracts; configuration examples contain no real credentials.
+The logs are execution evidence. The [walkthrough](docs/demo.md) explains the sequence and expected results without requiring access to the logs. GitHub may require sign-in to expand logs, and log availability depends on Actions retention.
 
-## Run the local transactional slice
+## How it works
 
-Requires Docker with Linux containers and Python 3.12+.
+| File | Role in the demo |
+| --- | --- |
+| [`scripts/detection/demo_probe.py`](scripts/detection/demo_probe.py) | PR-editable code: a harmless status check and a commented attack payload. |
+| [`security/control.json`](security/control.json) | The `enforcement_enabled` boolean: `false` permits exercise PR credentials; `true` restricts issuance to trusted `main` contexts. |
+| [`scripts/detection/apply_control.py`](scripts/detection/apply_control.py) | Builds, applies, and verifies the exercise role's IAM trust policy. |
+| [Identity boundary workflow](.github/workflows/detection-demo.yml) | Runs the probe in CI for an owner-operated, same-repository PR. |
+| [Security control workflow](.github/workflows/security-control.yml) | Deploys the committed setting from `main` and verifies that `main` can still obtain the role. |
+
+1. The owner simulates an attacker by commenting out the normal `smoke_check()` call and uncommenting the payload in `demo_probe.py`, then opening a same-repository PR. The payload stays unmerged.
+2. Creating or updating that PR starts CI. With the control off, the payload exchanges the job's GitHub OIDC token for temporary credentials belonging to an isolated exercise deployment role.
+3. The payload patches the EKS application. The replacement workload inherits the application's data-reading identity and prints synthetic DynamoDB records into the Actions log, then attempts to restore the application.
+4. The owner commits `"enforcement_enabled": true` to `main`. After **Deploy security control** succeeds, a fresh attempt of the attack is denied by AWS STS. Legitimate `main` access remains allowed.
+
+The deployment role cannot read the tables directly: replacing application code is the pivot to data access. The control limits credential issuance by trusted context; it does not scan code or revoke previously issued sessions. The committed setting is **on**; the file alone does not prove the current AWS policy. See the [control explanation](security/README.md).
+
+## Run locally
+
+The application and tests run without AWS or GitHub credentials. Requires Python 3.12+ and Docker with Linux containers.
 
 ```bash
 python -m venv .venv
@@ -47,25 +45,21 @@ python -m pip install -e '.[dev]'
 export APP_API_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(32))')
 docker compose up --build --wait
 python scripts/checks/local_api.py
+python -m pytest tests
+docker compose down
 ```
 
-PowerShell activation is `.venv\Scripts\Activate.ps1`; set the key with `$env:APP_API_KEY = python -c "import secrets; print(secrets.token_urlsafe(32))"`. API: `http://localhost:8000`; DynamoDB Local: `http://localhost:8001`. Both bind to loopback. `/health` and `/ready` are public probes; business routes require `X-API-Key`. OpenAPI docs are at `/docs`.
+On PowerShell, activate with `.venv/Scripts/Activate.ps1` and set the key with `$env:APP_API_KEY = python -c "import secrets; print(secrets.token_urlsafe(32))"`. The API is at `http://localhost:8000/docs`; business routes require `X-API-Key`. Local data resets when DynamoDB Local restarts. This local slice exercises the application; the CI-to-AWS attack requires the separate sandbox setup.
 
-The local database is in memory. Restarting it clears the fixtures; `docker compose up` reseeds them. Stop the local slice with `docker compose down`. The smoke check creates a synthetic transfer and verifies retry/rejection behaviour. It can also exercise the AWS service after an authorized administrator port-forward.
+## Explore or reproduce
 
-## Environment
-
-The AWS environment and control code are provisioned ahead of time. The setting in `security/control.json` enables the prepared example through its workflow. In production, the restrictive policy would be delivered through reviewed workflow YAML or another security-as-code process; see [production delivery](security/README.md#production-delivery).
-
-The lab uses synthetic data in an owned AWS account. With enforcement off, an unreviewed PR can obtain the isolated deployment role; enabling enforcement restricts that role to trusted `main` contexts, so the same PR request is denied while legitimate behavior is preserved. Setup, maintenance and cost procedures are in the operator runbooks under `docs/`.
-
-## Documentation
-
-| Read | Purpose |
+| Guide | Contents |
 | --- | --- |
-| [Architecture](docs/architecture.md) | System diagram, trust boundaries and shared contracts |
-| [Control](security/README.md) | IAM trust control, enforcement behavior and production delivery |
-| [Application](docs/application.md) | Routes, transactional invariants and fixtures |
-| [Observability](docs/observability.md) | Evidence sources and their limits |
+| [Demo walkthrough](docs/demo.md) | Full attack/control comparison, setup prerequisites, evidence, and reset |
+| [Architecture](docs/architecture.md) | AWS components, identities, and trust boundaries |
+| [Infrastructure](docs/infrastructure.md) and [delivery](docs/delivery.md) | Provisioning, repository variables, and application bootstrap |
+| [Testing](docs/testing.md) | Local checks and live acceptance cases |
+| [Detection](docs/detection/README.md) | Optional independent CloudTrail/GitHub evidence collection |
+| [Teardown](docs/teardown.md) | Removing billable sandbox resources |
 
-The exercise deliberately allows PR-context assumption of an isolated deployment role while enforcement is off. Its payload reads synthetic records through replacement workload code and attempts to restore the application. Enabling the control blocks new PR credential issuance; baseline release roles remain main-only.
+This repository is published for inspection. Contributions and live exercise runs are reserved for the owner; reproduce the AWS exercise in your own isolated sandbox using a private copy.

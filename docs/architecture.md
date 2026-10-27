@@ -1,6 +1,6 @@
 # Mybank EKS sandbox architecture
 
-Repository: `aleduenas/ci-identity-heist-demo` (private).
+Repository: `aleduenas/ci-identity-heist-demo` (public security demonstration). Live exercise reproduction uses an owner-operated private copy; see the [demo walkthrough](demo.md).
 
 ## Purpose and boundary
 
@@ -15,7 +15,7 @@ flowchart LR
   KC --> STS[AWS STS temporary IAM roles]
   STS --> Access[EKS access entries and namespace RBAC]
   STS --> Read[Read-only customer-data IAM role]
-  Repo[Private GitHub repository] --> CI[GitHub Actions test and build]
+  Repo[Owner-operated GitHub repository] --> CI[GitHub Actions test and build]
   CI --> OIDC[GitHub OIDC build role]
   OIDC --> ECR[Private ECR image]
   CI --> CD[Trusted self-hosted runner inside VPC]
@@ -63,7 +63,7 @@ The local HTTP Keycloak development service is an intentional lab simplification
 
 ## Delivery workflow
 
-Pull requests run application and Kubernetes checks on GitHub-hosted workers.
+Owner-authored, same-repository pull requests run application and Kubernetes checks on GitHub-hosted workers. Workflow entry jobs require the repository owner as the triggering actor.
 Internal environment checks have a separate workflow triggered by infrastructure
 changes or explicit dispatch. Trusted main application releases test/build a
 commit-tagged image, assume a build role through OIDC and push to ECR. A separate
@@ -111,7 +111,7 @@ A private EC2 operations host with SSM access provides the runner machine and an
 
 ## Operational phases and acceptance
 
-1. Use a private repository and dedicated synthetic AWS sandbox.
+1. Use an owner-operated private repository and dedicated synthetic AWS sandbox to reproduce the live exercise. This repository provides the source and recorded runs.
 2. Enable the [security control](../security/README.md) for the exercise; employee federation is optional supporting infrastructure.
 3. Run local checks and a container smoke test when tooling permits; record actual results.
 4. An authorized operator prepares the AWS environment in the owned lab account.

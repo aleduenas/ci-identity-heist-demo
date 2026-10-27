@@ -1,6 +1,6 @@
 # Delivery and Kubernetes operations
 
-The PR workflow runs only on GitHub-hosted Ubuntu workers. Main releases run the same checks, publish a commit-tagged image through a GitHub OIDC build role, then optionally deploy its content digest from a trusted VPC-connected runner. Infrastructure apply and initial Kubernetes bootstrap remain operator actions. No GitHub workflow provisions AWS resources.
+The PR workflow runs owner-authored, same-repository changes on GitHub-hosted Ubuntu workers. Entry workflows require the repository owner as the triggering actor. Main releases run the same checks, publish a commit-tagged image through a GitHub OIDC build role, then optionally deploy its content digest from a trusted VPC-connected runner. Infrastructure apply and initial Kubernetes bootstrap remain operator actions. No GitHub workflow provisions AWS resources. See [the walkthrough](demo.md) to reproduce the lab in a private copy.
 
 ## Components and prerequisites
 
@@ -75,7 +75,7 @@ The namespace enforces the Kubernetes restricted Pod Security profile. Pods run 
 
 ## Trusted runner setup
 
-Use the optional `operations_instance_id` private EC2 host prepared by Terraform, or a dedicated equivalent with VPC access. Its instance role allows SSM management only; it does not receive cluster-administrator or customer-data privileges. The deployment job receives short-lived credentials from GitHub OIDC. Register the runner manually with an ephemeral registration token obtained from this private repository's **Settings → Actions → Runners → New self-hosted runner** screen. Follow the generated, checksum-verified GitHub installation instructions inside an SSM session:
+Use the optional `operations_instance_id` private EC2 host prepared by Terraform, or a dedicated equivalent with VPC access. Its instance role allows SSM management only; it does not receive cluster-administrator or customer-data privileges. The deployment job receives short-lived credentials from GitHub OIDC. Register the runner manually with an ephemeral registration token obtained from your private exercise repository's **Settings → Actions → Runners → New self-hosted runner** screen. Follow the generated, checksum-verified GitHub installation instructions inside an SSM session:
 
 ```bash
 aws ssm start-session --target OPERATIONS_INSTANCE_ID --region us-east-1

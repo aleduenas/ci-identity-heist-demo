@@ -13,6 +13,11 @@ permissions:
 
 jobs:
   infrastructure:
+    if: >-
+      github.actor == github.repository_owner &&
+      (github.event_name != 'pull_request' ||
+      (github.event.pull_request.user.login == github.repository_owner &&
+      github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:

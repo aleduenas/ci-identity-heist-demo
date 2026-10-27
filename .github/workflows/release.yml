@@ -15,11 +15,12 @@ concurrency:
 
 jobs:
   checks:
+    if: github.actor == github.repository_owner && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/checks.yml
 
   verify-identity:
     needs: checks
-    if: github.ref == 'refs/heads/main'
+    if: github.actor == github.repository_owner && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -37,6 +38,7 @@ jobs:
   publish:
     needs: [checks, verify-identity]
     if: >-
+      github.actor == github.repository_owner &&
       github.ref == 'refs/heads/main' &&
       vars.AWS_REGION != '' && vars.AWS_BUILD_ROLE_ARN != '' &&
       vars.ECR_REPOSITORY_URL != ''
@@ -69,6 +71,7 @@ jobs:
   deploy:
     needs: publish
     if: >-
+      github.actor == github.repository_owner &&
       github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true' &&
       vars.AWS_DEPLOY_ROLE_ARN != '' && vars.EKS_CLUSTER_NAME != ''
     runs-on: [self-hosted, linux, x64, mybank-sandbox]

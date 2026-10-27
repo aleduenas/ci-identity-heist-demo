@@ -1,5 +1,7 @@
 # GitHub-deployed IAM control
 
+The recorded demonstration's AWS environment is torn down and **Deploy security control** is disabled. The behavior below applies after provisioning a sandbox and enabling its live workflows; see the [demo walkthrough](../docs/demo.md).
+
 The attack obtains deployment credentials from an unreviewed PR. This control
 changes the exercise role's AWS IAM trust so only the intended `main` contexts
 can obtain credentials. The control code is already written: changing

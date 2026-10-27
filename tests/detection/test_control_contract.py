@@ -14,7 +14,8 @@ def test_control_never_runs_on_pr_or_checks_out_a_pr():
     assert set(flow["on"]) == {"push", "workflow_dispatch"}
     assert flow["on"]["push"]["branches"] == ["main"]
     job = flow["jobs"]["deploy-control"]
-    assert job["if"] == "github.ref == 'refs/heads/main'"
+    assert job["if"] == ("github.actor == github.repository_owner && "
+                         "github.ref == 'refs/heads/main'")
     checkout = next(s for s in job["steps"] if s.get("uses", "").startswith("actions/checkout@"))
     assert checkout["with"] == {"ref": "main", "persist-credentials": "false"}
     assert flow["concurrency"]["cancel-in-progress"] == "false"

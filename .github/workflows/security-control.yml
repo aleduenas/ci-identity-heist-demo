@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   deploy-control:
-    if: github.ref == 'refs/heads/main'
+    if: github.actor == github.repository_owner && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -59,7 +59,7 @@ jobs:
 
   verify-main-access:
     needs: deploy-control
-    if: github.ref == 'refs/heads/main'
+    if: github.actor == github.repository_owner && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:

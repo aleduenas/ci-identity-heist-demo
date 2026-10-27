@@ -65,7 +65,8 @@ Record commands/results with credentials and assertions excluded. This matrix is
 `python scripts/checks/repository_hygiene.py` scans tracked working files and new, unignored files.
 It rejects local/internal paths and recognizable credential formats without printing values.
 `--history` additionally scans every reachable historical blob and reports historical internal
-paths; the existing history contains old planning documents. Neither mode rewrites history.
+paths, including any local backup refs. Neither mode rewrites history. GitHub-managed PR refs
+have a separate lifecycle from published branches and tags.
 The guard supplements review rather than proving the absence of every possible secret.
 
 The lab deliberately enables the EKS public API for GitHub-hosted PR jobs, while the app

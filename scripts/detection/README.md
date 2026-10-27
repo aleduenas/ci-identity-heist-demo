@@ -1,5 +1,7 @@
 # Detection operator commands
 
+The recorded demonstration's AWS environment is torn down and its live workflows are disabled. To reproduce the exercise, provision your own private copy and enable the workflows as described in the [walkthrough](../../docs/demo.md).
+
 To deploy the control, use the [GitHub-deployed control](../../security/README.md):
 edit `security/control.json` on main and watch **Deploy security control**.
 `apply_control.py` is the prepared example implementation. The setting enables
